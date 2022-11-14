@@ -1,3 +1,3 @@
-module jngo/structs
+module github.com/jnsoft/jngo
 
 go 1.19
