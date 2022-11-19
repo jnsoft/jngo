@@ -13,8 +13,9 @@ func Concat(a uint64, b uint64) uint64 {
 
 func Concat_big(a big.Int, b big.Int) *big.Int {
 	c := b
+	println(b, &b)
 	zero := big.NewInt(0)
-	for c > zero {
+	for c.Cmp(zero) > 0 {
 		a.Mul(&a, big.NewInt(10))
 		c.Div(&c, big.NewInt(10))
 	}
