@@ -86,26 +86,29 @@ func PrimesSieve(exclusive_limit int) []int {
 	return res
 }
 
+// Daisy-chain Filter processes
 func PrimesSieveConcurent(no_of_primes int) []int {
 	var res = make([]int, no_of_primes)
-	ch := make(chan int) // Create a new channel.
-	go generate(ch)      // Launch Generate goroutine.
+	ch := make(chan int)             // create a new channel
+	go generate_prime_candidates(ch) // launch Generate goroutine.
 	for i := 0; i < no_of_primes; i++ {
 		prime := <-ch
+		// println("new prime, adding filter for " + strconv.Itoa(prime))
 		res[i] = prime
 		if i == no_of_primes-1 {
 			break
 		} else {
-			ch1 := make(chan int)
-			go filter_primes(ch, ch1, prime)
-			ch = ch1
+			ch_next := make(chan int)
+			go filter_primes(ch, ch_next, prime)
+			ch = ch_next // the input of the next filter is the output of this one
 		}
 	}
 	return res
 }
 
-func generate(ch chan<- int) {
+func generate_prime_candidates(ch chan<- int) {
 	for i := 2; ; i++ {
+		// println("sending " + strconv.Itoa(i))
 		ch <- i // Send 'i' to channel 'ch'.
 	}
 }
@@ -114,6 +117,7 @@ func generate(ch chan<- int) {
 func filter_primes(in <-chan int, out chan<- int, prime int) {
 	for {
 		i := <-in // Receive value from 'in'.
+		// println("recieved " + strconv.Itoa(i) + " to " + strconv.Itoa(prime) + " filter")
 		if i%prime != 0 {
 			out <- i // Send 'i' to 'out'.
 		}
