@@ -5,6 +5,12 @@ import (
 	"math/big"
 )
 
+// HELPERS
+
+func Pow(x, y int) int {
+	return int(math.Pow(float64(x), float64(y)))
+}
+
 func Concat(a uint64, b uint64) uint64 {
 	c := b
 	for c > 0 {
@@ -24,6 +30,27 @@ func Concat_big(a big.Int, b big.Int) *big.Int {
 	return big.NewInt(0).Add(&a, &b)
 }
 
+// Greatest Common Divisor (a.k.a. gcd, gcf, hcf, gcm, sgd (in swedish))
+func GCD(a, b int) int {
+	for b != 0 {
+		t := b
+		b = a % b
+		a = t
+	}
+	return a
+}
+
+// Least Common Multiple via GCD
+func LCM(a, b int, integers ...int) int {
+	result := a * b / GCD(a, b)
+
+	for i := 0; i < len(integers); i++ {
+		result = LCM(result, integers[i])
+	}
+
+	return result
+}
+
 // PRIMES
 
 func PrimesSieve(exclusive_limit int) []int {
@@ -41,10 +68,10 @@ func PrimesSieve(exclusive_limit int) []int {
 		}
 	}
 
-	var res []int
+	var res = make([]int, sievebound)
 	for i, val := range sieve {
 		if val {
-			res = append(res, 2*i+1)
+			res[i] = 2*i + 1
 		}
 	}
 	res[0] = 2
