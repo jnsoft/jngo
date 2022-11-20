@@ -20,6 +20,8 @@ func New[T any]() *Stack[T] { return &Stack[T]{nil, 0} }
 
 func (s *Stack[T]) Len() int { return s.length }
 
+func (s *Stack[T]) IsEmpty() bool { return s.length == 0 }
+
 func (s *Stack[T]) Peek() T {
 	if s.length == 0 {
 		panic("stack underflow")
