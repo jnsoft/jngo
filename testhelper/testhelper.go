@@ -29,3 +29,22 @@ func AssertNotEqual[T comparable](t *testing.T, got, want T) {
 		t.Errorf("didn't want %v", got)
 	}
 }
+
+func CollectionAssertEqual[T comparable](t *testing.T, got, want []T) {
+	t.Helper()
+	if len(got) != len(want) {
+		t.Errorf("got length %v, want length %v", len(got), len(want))
+		return
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			if len(got) > 20 {
+				t.Errorf("collection assert failed at index %v", i)
+				return
+			} else {
+				t.Errorf("got %v, want %v", got, want)
+				return
+			}
+		}
+	}
+}

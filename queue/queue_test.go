@@ -6,7 +6,7 @@ import (
 	. "github.com/jnsoft/jngo/testhelper"
 )
 
-func TestStack(t *testing.T) {
+func TestQueue(t *testing.T) {
 	t.Run("integer queue", func(t *testing.T) {
 		q := new(Queue[int])
 
