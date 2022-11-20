@@ -40,5 +40,11 @@ func TestStack(t *testing.T) {
 		fst := q.Dequeue()
 		scd := q.Dequeue()
 		AssertEqual(t, fst+scd, 3)
+
+		// string representation
+		q.Enqueue(1)
+		q.Enqueue(2)
+		q.Enqueue(3)
+		AssertEqual(t, q.String(), "1->2->3")
 	})
 }

@@ -31,5 +31,11 @@ func TestStack(t *testing.T) {
 		fst := s.Pop()
 		scd := s.Pop()
 		AssertEqual(t, fst+scd, 3)
+
+		// string representation
+		s.Push(1)
+		s.Push(2)
+		s.Push(3)
+		AssertEqual(t, s.String(), "3->2->1")
 	})
 }
