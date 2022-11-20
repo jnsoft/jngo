@@ -3,9 +3,17 @@ package inthelper
 import (
 	"math"
 	"math/big"
+
+	misc "github.com/jnsoft/jngo"
 )
 
 // HELPERS
+
+func Sum(arr []int) int {
+	return misc.Fold(arr, func(a, b int) int {
+		return a + b
+	}, 0)
+}
 
 func Pow(x, y int) int {
 	return int(math.Pow(float64(x), float64(y)))
@@ -68,14 +76,48 @@ func PrimesSieve(exclusive_limit int) []int {
 		}
 	}
 
-	var res = make([]int, sievebound)
+	var res = make([]int, 0)
 	for i, val := range sieve {
 		if val {
-			res[i] = 2*i + 1
+			res = append(res, 2*i+1)
 		}
 	}
 	res[0] = 2
 	return res
+}
+
+func PrimesSieveConcurent(no_of_primes int) []int {
+	var res = make([]int, no_of_primes)
+	ch := make(chan int) // Create a new channel.
+	go generate(ch)      // Launch Generate goroutine.
+	for i := 0; i < no_of_primes; i++ {
+		prime := <-ch
+		res[i] = prime
+		if i == no_of_primes-1 {
+			break
+		} else {
+			ch1 := make(chan int)
+			go filter_primes(ch, ch1, prime)
+			ch = ch1
+		}
+	}
+	return res
+}
+
+func generate(ch chan<- int) {
+	for i := 2; ; i++ {
+		ch <- i // Send 'i' to channel 'ch'.
+	}
+}
+
+// Copy the values from channel 'in' to channel 'out', removing those divisible by 'prime'.
+func filter_primes(in <-chan int, out chan<- int, prime int) {
+	for {
+		i := <-in // Receive value from 'in'.
+		if i%prime != 0 {
+			out <- i // Send 'i' to 'out'.
+		}
+	}
 }
 
 /*

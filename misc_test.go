@@ -41,6 +41,24 @@ func TestSequence(t *testing.T) {
 	})
 }
 
+func TestFilterByArray(t *testing.T) {
+	t.Run("filter three", func(t *testing.T) {
+		ns := []int{1, 2, 3, 4, 5, 6}
+		even := FilterByArray(ns, []bool{false, true, false, true, false, false})
+		CollectionAssertEqual(t, even, []int{2, 4})
+	})
+}
+
+func TestMap(t *testing.T) {
+	t.Run("square", func(t *testing.T) {
+		ns := []int{1, 2, 3, 4}
+		sqs := Map(ns, func(x int) int {
+			return x * x
+		})
+		CollectionAssertEqual(t, sqs, []int{1, 4, 9, 16})
+	})
+}
+
 func TestFilter(t *testing.T) {
 	t.Run("even numbers", func(t *testing.T) {
 		ns := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 0}

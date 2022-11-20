@@ -25,6 +25,27 @@ func Sequence[T Number](min, max, step T) []T {
 	return seq
 }
 
+func FilterByArray[A any, B bool](arr []A, filter []B) []A {
+	if len(arr) != len(filter) {
+		panic("array lengths must be equal")
+	}
+	filtered := make([]A, 0)
+	for i := range filter {
+		if filter[i] {
+			filtered = append(filtered, arr[i])
+		}
+	}
+	return filtered
+}
+
+func Map[T any, M any](arr []T, f func(T) M) []M {
+	res := make([]M, len(arr))
+	for i, e := range arr {
+		res[i] = f(e)
+	}
+	return res
+}
+
 func Filter[A any](arr []A, f func(A) bool) []A {
 	filtered := make([]A, 0)
 	for _, v := range arr {
@@ -35,7 +56,6 @@ func Filter[A any](arr []A, f func(A) bool) []A {
 	return filtered
 }
 
-// redue (fold)
 func Reduce[A, B any](collection []A, accumulator func(B, A) B, initialValue B) B {
 	var result = initialValue
 	for _, x := range collection {
@@ -43,6 +63,9 @@ func Reduce[A, B any](collection []A, accumulator func(B, A) B, initialValue B) 
 	}
 	return result
 }
+
+// same as Reduce
+func Fold[A, B any](arr []A, f func(B, A) B, initval B) B { return Reduce(arr, f, initval) }
 
 func Find[A any](items []A, predicate func(A) bool) (value A, found bool) {
 	for _, v := range items {
