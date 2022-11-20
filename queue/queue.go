@@ -18,14 +18,16 @@ type (
 
 func New[T any]() *Queue[T] { return &Queue[T]{nil, nil, 0} }
 
-func (s *Queue[T]) Len() int { return s.length }
+func (q *Queue[T]) Len() int { return q.length }
 
-func (s *Queue[T]) Peek() T {
-	if s.length == 0 {
+func (q *Queue[T]) IsEmpty() bool { return q.length == 0 }
+
+func (q *Queue[T]) Peek() T {
+	if q.length == 0 {
 		panic("queue underflow")
 	}
 
-	return s.head.value
+	return q.head.value
 }
 
 func (q *Queue[T]) Dequeue() T {
