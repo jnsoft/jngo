@@ -142,4 +142,18 @@ func IsPrime(n:int):
     return False
 */
 
+// pseudo primality testing using Fermat's theorem,
+// can report false primes, but never false negatives
+func PseudoPrime(n big.Int) bool {
+	return ModularExponentiation(n).Text(10) == "1"
+}
+
+func ModularExponentiation(n big.Int) *big.Int {
+	ONE := big.NewInt(1)
+	base := big.NewInt(2)
+	i := big.NewInt(1).Sub(&n, ONE)
+	res := n.Exp(base, i, &n)
+	return res
+}
+
 // FACTORS AND DIVISORS
