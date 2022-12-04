@@ -19,8 +19,8 @@ func TestPseudoPrime(t *testing.T) {
 	t.Run("PseudoPrime", func(t *testing.T) {
 		n, _ := new(big.Int).SetString("218882428714186575612", 0)
 		n2, _ := new(big.Int).SetString("785969971488174033889231946017", 0)
-		AssertFalse(t, PseudoPrime(*n))
-		AssertTrue(t, PseudoPrime(*n2))
+		AssertFalse(t, PseudoPrime(n))
+		AssertTrue(t, PseudoPrime(n2))
 	})
 }
 
@@ -28,7 +28,15 @@ func TestModExp(t *testing.T) {
 	t.Run("modular exponentiation", func(t *testing.T) {
 		n := big.NewInt(37)
 		one := big.NewInt(1)
-		tot := ModularExponentiation(*n)
+		tot := ModularExponentiation(n)
 		AssertEqual(t, one.Text(10), tot.Text(10))
+	})
+}
+
+func TestMillerRabin(t *testing.T) {
+	t.Run("Miller Rabin primality test", func(t *testing.T) {
+		p, _ := new(big.Int).SetString("785969971488174033889231946017", 0)
+		test1 := MillerRabin(p, 30)
+		AssertTrue(t, test1)
 	})
 }

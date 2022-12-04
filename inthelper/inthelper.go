@@ -1,11 +1,15 @@
 package inthelper
 
 import (
+	"crypto/rand"
 	"math"
 	"math/big"
 
 	misc "github.com/jnsoft/jngo"
 )
+
+var ZERO *big.Int = big.NewInt(0)
+var ONE *big.Int = big.NewInt(1)
 
 // HELPERS
 
@@ -144,16 +148,43 @@ func IsPrime(n:int):
 
 // pseudo primality testing using Fermat's theorem,
 // can report false primes, but never false negatives
-func PseudoPrime(n big.Int) bool {
+func PseudoPrime(n *big.Int) bool {
 	return ModularExponentiation(n).Text(10) == "1"
 }
 
-func ModularExponentiation(n big.Int) *big.Int {
-	ONE := big.NewInt(1)
+func ModularExponentiation(n *big.Int) *big.Int {
+	//ONE := big.NewInt(1)
 	base := big.NewInt(2)
-	i := big.NewInt(1).Sub(&n, ONE)
-	res := n.Exp(base, i, &n)
+	i := big.NewInt(1).Sub(n, ONE)
+	res := n.Exp(base, i, n)
 	return res
+}
+
+func MillerRabin(n *big.Int, k int) bool {
+	// write n as 2^s·d + 1 with d odd (by factoring out powers of 2 from n − 1)
+	s := ZERO
+	d := n.Sub(n, ONE)
+	for d.Mod(d, big.NewInt(2)) == ZERO {
+		d = d.Div(d, big.NewInt(2))
+		s = s.Add(s, ONE)
+	}
+	for i := 0; i < k; i++ { // witness loop
+		a, _ := rand.Int(rand.Reader, n)
+		x := ZERO.Exp(a, d, n)
+		if x == ONE || x == n.Sub(n, ONE) {
+			continue
+		}
+		for j := 0; j < int(s.Sub(s, ONE).Int64()); j++ {
+			x := ZERO.Exp(x, big.NewInt(2), n)
+			if x == n.Sub(n, ONE) {
+				break
+			} else {
+				return false
+			}
+		}
+	}
+	return true
+
 }
 
 // FACTORS AND DIVISORS
