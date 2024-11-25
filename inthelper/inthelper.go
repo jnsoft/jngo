@@ -5,11 +5,12 @@ import (
 	"math"
 	"math/big"
 
-	misc "github.com/jnsoft/jngo"
+	misc "github.com/jnsoft/jngo/misc"
 )
 
 var ZERO *big.Int = big.NewInt(0)
 var ONE *big.Int = big.NewInt(1)
+var TWO *big.Int = big.NewInt(2)
 
 // HELPERS
 
@@ -34,8 +35,7 @@ func Concat(a uint64, b uint64) uint64 {
 
 func Concat_big(a big.Int, b big.Int) *big.Int {
 	c := b
-	zero := big.NewInt(0)
-	for c.Cmp(zero) > 0 {
+	for c.Cmp(ZERO) > 0 {
 		a.Mul(&a, big.NewInt(10))
 		c.Div(&c, big.NewInt(10))
 	}
@@ -153,38 +153,50 @@ func PseudoPrime(n *big.Int) bool {
 }
 
 func ModularExponentiation(n *big.Int) *big.Int {
-	//ONE := big.NewInt(1)
-	base := big.NewInt(2)
-	i := big.NewInt(1).Sub(n, ONE)
-	res := n.Exp(base, i, n)
+	i := new(big.Int).Sub(n, ONE)
+	res := new(big.Int).Exp(TWO, i, n)
 	return res
 }
 
+// MillerRabin checks if n is a probable prime using k iterations of the Miller-Rabin test
 func MillerRabin(n *big.Int, k int) bool {
-	// write n as 2^s·d + 1 with d odd (by factoring out powers of 2 from n − 1)
-	s := ZERO
-	d := n.Sub(n, ONE)
-	for d.Mod(d, big.NewInt(2)) == ZERO {
-		d = d.Div(d, big.NewInt(2))
-		s = s.Add(s, ONE)
+
+	if n.Cmp(TWO) == 0 {
+		return true // 2 is a prime number
 	}
+
+	if n.Cmp(ONE) <= 0 || n.Bit(0) == 0 {
+		return false // n <= 1 or even
+	}
+
+	// write n as 2^s * d + 1 with d odd (by factoring out powers of 2 from n − 1)
+	//s := big.NewInt(0)
+	s := 0
+	d := new(big.Int).Sub(n, ONE)
+
+	for new(big.Int).Mod(d, TWO).Cmp(ZERO) == 0 {
+		d.Div(d, TWO)
+		s++
+	}
+
 	for i := 0; i < k; i++ { // witness loop
-		a, _ := rand.Int(rand.Reader, n)
-		x := ZERO.Exp(a, d, n)
-		if x == ONE || x == n.Sub(n, ONE) {
+		a, _ := rand.Int(rand.Reader, new(big.Int).Sub(n, ONE))
+		a.Add(a, ONE) // Ensure a is in the range [1, n-1]
+		x := new(big.Int).Exp(a, d, n)
+		if x.Cmp(ONE) == 0 || x.Cmp(new(big.Int).Sub(n, ONE)) == 0 { // # n is always a probable prime to base 1 and n − 1
 			continue
 		}
-		for j := 0; j < int(s.Sub(s, ONE).Int64()); j++ {
-			x := ZERO.Exp(x, big.NewInt(2), n)
-			if x == n.Sub(n, ONE) {
-				break
-			} else {
+		for j := 0; j < s-1; j++ { // inner loop
+			x.Exp(x, TWO, n)
+			if x.Cmp(new(big.Int).Sub(n, ONE)) == 0 {
+				continue
+			}
+			if x.Cmp(ONE) == 0 {
 				return false
 			}
 		}
 	}
 	return true
-
 }
 
 // FACTORS AND DIVISORS
