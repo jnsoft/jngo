@@ -21,6 +21,8 @@ func TestQueue(t *testing.T) {
 		q.Enqueue(2)
 		value := q.Dequeue()
 		AssertEqual(t, value, 1)
+
+		// dequeue second item, check queue is empty
 		value = q.Dequeue()
 		AssertEqual(t, value, 2)
 		AssertTrue(t, q.IsEmpty())
@@ -30,6 +32,7 @@ func TestQueue(t *testing.T) {
 		value = q.Peek()
 		AssertFalse(t, q.IsEmpty())
 		AssertEqual(t, value, 1)
+
 		value = q.Dequeue()
 		AssertTrue(t, q.IsEmpty())
 		AssertEqual(t, value, 1)
