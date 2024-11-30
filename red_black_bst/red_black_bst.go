@@ -34,6 +34,22 @@ func NewRedBlackTree[K misc.Ordered, V any]() *RedBlackTree[K, V] {
 	return &RedBlackTree[K, V]{}
 }
 
+func (t *RedBlackTree[K, V]) Copy() *RedBlackTree[K, V] {
+	copy := NewRedBlackTree[K, V]()
+	keys := t.Keys()
+	for _, key := range keys {
+		value, _ := t.Get(key)
+		copy.Put(key, value)
+	}
+	return copy
+}
+
+func (t *RedBlackTree[K, V]) Keys() []K {
+	var keys []K
+	inOrder(t.root, &keys)
+	return keys
+}
+
 // return number of key-value pairs in this symbol table
 func (t *RedBlackTree[K, V]) Size() int {
 	return size(t.root)
@@ -137,6 +153,43 @@ func (t *RedBlackTree[K, V]) Max() (K, error) {
 		return zero, errors.New("tree is empty")
 	}
 	return max(t.root).key, nil
+}
+
+// the largest key less than or equal to the given key
+func (t *RedBlackTree[K, V]) Floor(key K) (K, bool) {
+	x := floor(t.root, key)
+	if x == nil {
+		var zero K
+		return zero, false
+	} else {
+		return x.key, true
+	}
+}
+
+// the smallest key greater than or equal to the given key
+func (t *RedBlackTree[K, V]) Ceiling(key K) (K, bool) {
+	x := ceiling(t.root, key)
+	if x == nil {
+		var zero K
+		return zero, false
+	} else {
+		return x.key, true
+	}
+}
+
+// the key of rank k
+func (t *RedBlackTree[K, V]) Select(rank int) (K, bool) {
+	if rank < 0 || rank >= t.Size() {
+		var zero K
+		return zero, false
+	}
+	x := selectByRank(t.root, rank)
+	return x.key, true
+}
+
+// number of keys less than key
+func (t *RedBlackTree[K, V]) Rank(key K) int {
+	return rank(t.root, key)
 }
 
 func (t *RedBlackTree[K, V]) PrettyPrint() string {
@@ -315,6 +368,15 @@ func delete[K misc.Ordered, V any](x *Node[K, V], key K) *Node[K, V] {
 	return balance(x)
 }
 
+func inOrder[K misc.Ordered, V any](node *Node[K, V], keys *[]K) {
+	if node == nil {
+		return
+	}
+	inOrder(node.left, keys)
+	*keys = append(*keys, node.key)
+	inOrder(node.right, keys)
+}
+
 func buildTreeString[K misc.Ordered, V any](node *Node[K, V], depth int, position string, builder *strings.Builder) {
 	if node == nil {
 		return
@@ -445,123 +507,72 @@ func max[K misc.Ordered, V any](x *Node[K, V]) *Node[K, V] {
 	}
 }
 
+// the largest key in the subtree rooted at x less than or equal to the given key
+func floor[K misc.Ordered, V any](x *Node[K, V], key K) *Node[K, V] {
+	if x == nil {
+		return nil
+	}
+	if key == x.key {
+		return x
+	}
+	if key < x.key {
+		return floor(x.left, key)
+	}
+	t := floor(x.right, key)
+	if t != nil {
+		return t
+	}
+	return x
+}
+
+// the smallest key in the subtree rooted at x greater than or equal to the given key
+func ceiling[K misc.Ordered, V any](x *Node[K, V], key K) *Node[K, V] {
+	if x == nil {
+		return nil
+	}
+	if key == x.key {
+		return x
+	}
+	if key > x.key {
+		return ceiling(x.right, key)
+	}
+	t := ceiling(x.left, key)
+	if t != nil {
+		return t
+	}
+	return x
+}
+
+// find the node of rank k in the subtree rooted at x
+func selectByRank[K misc.Ordered, V any](x *Node[K, V], rank int) *Node[K, V] {
+	if x == nil {
+		return nil
+	}
+	leftSize := size(x.left)
+	if leftSize > rank {
+		return selectByRank(x.left, rank)
+	} else if leftSize < rank {
+		return selectByRank(x.right, rank-leftSize-1)
+	} else {
+		return x
+	}
+}
+
+// number of keys less than key in the subtree rooted at x
+func rank[K misc.Ordered, V any](x *Node[K, V], key K) int {
+	if x == nil {
+		return 0
+	}
+	if key < x.key {
+		return rank(x.left, key)
+	} else if key > x.key {
+		return 1 + size(x.left) + rank(x.right, key)
+	} else {
+		return size(x.left)
+	}
+}
+
 /*
-
-
-
-
-
-       public RedBlackBST<TKey, TValue> Copy()
-       {
-           RedBlackBST<TKey, TValue> copy = new RedBlackBST<TKey, TValue>();
-           foreach (TKey key in this.Keys)
-               copy.Put(key, this.Get(key));
-           return copy;
-       }
-
-       #endregion
-
-       #region Red black helpers
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-       // the largest key less than or equal to the given key
-       public TKey Floor(TKey key)
-       {
-           Node x = floor(root, key);
-           if (x == null)
-               return default(TKey);
-           else return x.Key;
-       }
-
-       // the largest key in the subtree rooted at x less than or equal to the given key
-       private Node floor(Node x, TKey key)
-       {
-           if (x == null) return null;
-           int cmp = key.CompareTo(x.Key);
-           if (cmp == 0)
-               return x;
-           if (cmp < 0)
-               return floor(x.left, key);
-           Node t = floor(x.right, key);
-           if (t != null)
-               return t;
-           else
-               return x;
-       }
-
-       // the smallest key greater than or equal to the given key
-       public TKey Ceiling(TKey key)
-       {
-           Node x = ceiling(root, key);
-           if (x == null) return default(TKey);
-           else return x.Key;
-       }
-
-       // the smallest key in the subtree rooted at x greater than or equal to the given key
-       private Node ceiling(Node x, TKey key)
-       {
-           if (x == null) return null;
-           int cmp = key.CompareTo(x.Key);
-           if (cmp == 0)
-               return x;
-           if (cmp > 0)
-               return ceiling(x.right, key);
-           Node t = ceiling(x.left, key);
-           if (t != null)
-               return t;
-           else
-               return x;
-       }
-
-       // the key of rank k
-       public TKey Select(int k)
-       {
-           if (k < 0 || k >= Size)
-               return default(TKey);
-           Node x = select(root, k);
-           return x.Key;
-       }
-
-       // the key of rank k in the subtree rooted at x
-       private Node select(Node x, int k)
-       {
-           int t = size(x.left);
-           if (t > k)
-               return select(x.left, k);
-           else if (t < k)
-               return select(x.right, k - t - 1);
-           else
-               return x;
-       }
-
-       // number of keys less than key
-       public int Rank(TKey key) { return rank(key, root); }
-
-       // number of keys less than key in the subtree rooted at x
-       private int rank(TKey key, Node x)
-       {
-           if (x == null) return 0;
-           int cmp = key.CompareTo(x.Key);
-           if (cmp < 0)
-               return rank(key, x.left);
-           else if (cmp > 0)
-               return 1 + size(x.left) + rank(key, x.right);
-           else
-               return size(x.left);
-       }
 
        #endregion
 
