@@ -27,6 +27,7 @@ func TestRedBlackBST(t *testing.T) {
 		max, err := tree.Max()
 		AssertTrue(t, err == nil)
 		AssertEqual(t, max, n-1)
+		fmt.Print(tree.PrettyPrint())
 	})
 
 	t.Run("test string, int", func(t *testing.T) {
@@ -48,5 +49,19 @@ func TestRedBlackBST(t *testing.T) {
 		AssertTrue(t, err == nil)
 		println(max)
 		AssertEqual(t, max, "c")
+
+		fmt.Print(tree.PrettyPrint())
+	})
+
+	t.Run("validate tree", func(t *testing.T) {
+		n := 1000
+		tree := NewRedBlackTree[int, string]()
+		for i := 0; i < n; i++ {
+			tree.Put(i, fmt.Sprint(i))
+		}
+
+		isValid, err := ValidateRedBlackTree(tree)
+		AssertTrue(t, isValid)
+		AssertTrue(t, err == nil)
 	})
 }

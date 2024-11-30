@@ -2,6 +2,8 @@ package red_black_dst
 
 import (
 	"errors"
+	"fmt"
+	"strings"
 
 	"github.com/jnsoft/jngo/misc"
 )
@@ -135,6 +137,23 @@ func (t *RedBlackTree[K, V]) Max() (K, error) {
 		return zero, errors.New("tree is empty")
 	}
 	return max(t.root).key, nil
+}
+
+func (t *RedBlackTree[K, V]) PrettyPrint() string {
+	var builder strings.Builder
+	buildTreeString(t.root, 0, "Root", &builder)
+	return builder.String()
+}
+
+func ValidateRedBlackTree[K misc.Ordered, V any](tree *RedBlackTree[K, V]) (bool, error) {
+	if tree.root == nil {
+		return true, nil // An empty tree is valid
+	}
+	if tree.root.color != BLACK {
+		return false, errors.New("root is not black")
+	}
+	_, isValid, err := validateNode(tree.root, 0, -1)
+	return isValid, err
 }
 
 func NewNode[K misc.Ordered, V any](key K, value V, color Color, n int) *Node[K, V] {
@@ -294,6 +313,49 @@ func delete[K misc.Ordered, V any](x *Node[K, V], key K) *Node[K, V] {
 		}
 	}
 	return balance(x)
+}
+
+func buildTreeString[K misc.Ordered, V any](node *Node[K, V], depth int, position string, builder *strings.Builder) {
+	if node == nil {
+		return
+	}
+	indent := ""
+	for i := 0; i < depth; i++ {
+		indent += " "
+	}
+	color := "Red"
+	if node.color == BLACK {
+		color = "Black"
+	}
+	builder.WriteString(fmt.Sprintf("%s%s: %v (%s)\n", indent, position, node.key, color))
+	buildTreeString(node.left, depth+1, "L", builder)
+	buildTreeString(node.right, depth+1, "R", builder)
+}
+
+func validateNode[K misc.Ordered, V any](node *Node[K, V], blackCount int, pathBlackCount int) (int, bool, error) {
+	if node == nil {
+		if pathBlackCount == -1 {
+			pathBlackCount = blackCount
+		} else if blackCount != pathBlackCount {
+			err_str := fmt.Sprintf("black count mismatch: expected %d, got %d\n", pathBlackCount, blackCount)
+			return 0, false, errors.New(err_str)
+		}
+		return pathBlackCount, true, nil
+	}
+	if node.color == RED {
+		if isRed(node.left) || isRed(node.right) {
+			err_str := fmt.Sprintf("Red-Red violation at node with key %v\n", node.key)
+			return 0, false, errors.New(err_str)
+		}
+	} else {
+		blackCount++
+	}
+	leftBlackCount, isLeftValid, _ := validateNode(node.left, blackCount, pathBlackCount)
+	rightBlackCount, isRightValid, _ := validateNode(node.right, blackCount, pathBlackCount)
+	if !isLeftValid || !isRightValid || leftBlackCount != rightBlackCount {
+		return 0, false, nil
+	}
+	return leftBlackCount, true, nil
 }
 
 // ------------ Red black helpers ----------------------------
