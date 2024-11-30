@@ -36,8 +36,7 @@ func TestModExp(t *testing.T) {
 func TestMillerRabin(t *testing.T) {
 	t.Run("Miller Rabin primality test", func(t *testing.T) {
 		p, _ := new(big.Int).SetString("785969971488174033889231946017", 0)
-		//p, _ = new(big.Int).SetString("57", 0)
-		test1 := MillerRabin(p, 30)
+		test1 := MillerRabin(p, 300)
 		AssertTrue(t, test1)
 	})
 }

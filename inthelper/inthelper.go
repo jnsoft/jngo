@@ -180,7 +180,7 @@ func MillerRabin(n *big.Int, k int) bool {
 	}
 
 	for i := 0; i < k; i++ { // witness loop
-		a, _ := rand.Int(rand.Reader, new(big.Int).Sub(n, ONE))
+		a, _ := rand.Int(rand.Reader, new(big.Int).Sub(n, TWO))
 		a.Add(a, ONE) // Ensure a is in the range [1, n-1]
 		x := new(big.Int).Exp(a, d, n)
 		if x.Cmp(ONE) == 0 || x.Cmp(new(big.Int).Sub(n, ONE)) == 0 { // # n is always a probable prime to base 1 and n − 1
@@ -188,12 +188,15 @@ func MillerRabin(n *big.Int, k int) bool {
 		}
 		for j := 0; j < s-1; j++ { // inner loop
 			x.Exp(x, TWO, n)
-			if x.Cmp(new(big.Int).Sub(n, ONE)) == 0 {
-				continue
-			}
 			if x.Cmp(ONE) == 0 {
 				return false
 			}
+			if x.Cmp(new(big.Int).Sub(n, ONE)) == 0 {
+				break
+			}
+		}
+		if x.Cmp(new(big.Int).Sub(n, ONE)) != 0 {
+			return false
 		}
 	}
 	return true
