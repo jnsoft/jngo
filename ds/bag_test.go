@@ -34,4 +34,22 @@ func TestBag(t *testing.T) {
 		ones = bag.Count(1)
 		AssertEqual(t, ones, 1)
 	})
+
+	t.Run("test random", func(t *testing.T) {
+		bag := NewBag[int]()
+		bag.Add(1)
+		bag.Add(1)
+		bag.Add(2)
+		_, ok := bag.PeekRandom()
+		AssertTrue(t, ok)
+		cnt := bag.Size()
+		AssertEqual(t, cnt, 3)
+		bag.ExtractRandom()
+		bag.ExtractRandom()
+		bag.ExtractRandom()
+		cnt = bag.Size()
+		AssertEqual(t, cnt, 0)
+		_, ok = bag.ExtractRandom()
+		AssertFalse(t, ok)
+	})
 }
