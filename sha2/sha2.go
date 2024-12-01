@@ -9,11 +9,11 @@ const SHA256_BLOCK_SIZE = 512
 // initial hash value [§5.3.3]
 // H(i) is the i:th hash value. H(0) is the initial hash value; H(N) is the final hash value and is used to determine the message digest
 // For SHA-256, the initial hash value, H(0), shall consist of the following eight 32-bit words
-var H0 = []uint{0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19}
+var H0 = []uint32{0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19}
 
 // K: Constant value to be used for the iteration t of the hash computation
 // These words represent the first thirty-two bits of the fractional parts of the cube roots of the first sixty-four prime numbers
-var K = []uint{
+var K = []uint32{
 	0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
 	0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
 	0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
@@ -26,7 +26,7 @@ var K = []uint{
 
 func Hash256(data []byte) []byte {
 	l := len(data)
-	H := make([]uint, 8)
+	H := make([]uint32, 8)
 	copy(H, H0[:8])
 
 	ix := 0
@@ -81,12 +81,12 @@ func Hash256(data []byte) []byte {
 	return getHashBytes(H)
 }
 
-func sha256Transform(H *[]uint, data [64]byte) {
-	var a, b, c, d, e, f, g, h, i, j, t1, t2 uint
-	var m [64]uint
+func sha256Transform(H *[]uint32, data [64]byte) {
+	var a, b, c, d, e, f, g, h, i, j, t1, t2 uint32
+	var m [64]uint32
 
 	for i, j = 0, 0; i < 16; i, j = i+1, j+4 {
-		m[i] = uint(data[j])<<24 | uint(data[j+1])<<16 | uint(data[j+2])<<8 | uint(data[j+3])
+		m[i] = uint32(data[j])<<24 | uint32(data[j+1])<<16 | uint32(data[j+2])<<8 | uint32(data[j+3])
 	}
 
 	for i := 16; i < 64; i++ {
@@ -127,32 +127,32 @@ func sha256Transform(H *[]uint, data [64]byte) {
 }
 
 // Rotates right (circular right shift) value x by n positions [§3.2.4].
-func rotr(x uint, n uint8) uint {
+func rotr(x uint32, n uint8) uint32 {
 	return (x >> n) | (x << (32 - n))
 }
 
 // Logical functions [§4.1.2].
-func Σ0(x uint) uint { // lsigma0
+func Σ0(x uint32) uint32 { // lsigma0
 	return rotr(x, 2) ^ rotr(x, 13) ^ rotr(x, 22)
 }
-func Σ1(x uint) uint { //lsigma1
+func Σ1(x uint32) uint32 { //lsigma1
 	return rotr(x, 6) ^ rotr(x, 11) ^ rotr(x, 25)
 }
-func σ0(x uint) uint { // ssigma0
+func σ0(x uint32) uint32 { // ssigma0
 	return rotr(x, 7) ^ rotr(x, 18) ^ (x >> 3)
 }
-func σ1(x uint) uint { // ssigma1
+func σ1(x uint32) uint32 { // ssigma1
 	return rotr(x, 17) ^ rotr(x, 19) ^ (x >> 10)
 }
-func ch(x, y, z uint) uint { // 'choice'
+func ch(x, y, z uint32) uint32 { // 'choice'
 	return (x & y) ^ (^x & z)
 }
-func maj(x, y, z uint) uint { // 'majority'
+func maj(x, y, z uint32) uint32 { // 'majority'
 	return (x & y) ^ (x & z) ^ (y & z)
 }
 
 // GetHashBytes converts an array of uint32 to a byte array
-func getHashBytes(H []uint) []byte {
+func getHashBytes(H []uint32) []byte {
 	hash := make([]byte, 32)
 	for i := 0; i < 4; i++ {
 		hash[i] = byte((H[0] >> (24 - i*8)) & 0x000000ff)

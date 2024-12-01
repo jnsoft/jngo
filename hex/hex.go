@@ -2,12 +2,12 @@ package hex
 
 import "errors"
 
-func ToHexString(bytes []byte, toLower bool) string {
+func ToHexString(bytes []byte, toLUpper bool) string {
 	var hexChars string
-	if toLower {
-		hexChars = "0123456789abcdef"
-	} else {
+	if toLUpper {
 		hexChars = "0123456789ABCDEF"
+	} else {
+		hexChars = "0123456789abcdef"
 	}
 	// Helper function to convert a byte to a hex string
 	byteToHex := func(b byte) string {

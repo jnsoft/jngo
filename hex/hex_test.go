@@ -10,8 +10,8 @@ func TestHex(t *testing.T) {
 	str := "Hello, World!"
 	t.Run("To/From Hex String", func(t *testing.T) {
 		bytes := []byte(str)
-		hex_str_lower := ToHexString(bytes, true)
-		hex_str_upper := ToHexString(bytes, false)
+		hex_str_lower := ToHexString(bytes, false)
+		hex_str_upper := ToHexString(bytes, true)
 		returned_bytes1, err := FromHexString(hex_str_lower)
 		AssertTrue(t, err == nil)
 		returned_bytes2, err := FromHexString(hex_str_upper)
