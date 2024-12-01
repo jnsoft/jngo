@@ -1,11 +1,16 @@
 package inthelper
 
 import (
+	"crypto/rand"
 	"math"
 	"math/big"
 
-	misc "github.com/jnsoft/jngo"
+	misc "github.com/jnsoft/jngo/misc"
 )
+
+var ZERO *big.Int = big.NewInt(0)
+var ONE *big.Int = big.NewInt(1)
+var TWO *big.Int = big.NewInt(2)
 
 // HELPERS
 
@@ -30,8 +35,7 @@ func Concat(a uint64, b uint64) uint64 {
 
 func Concat_big(a big.Int, b big.Int) *big.Int {
 	c := b
-	zero := big.NewInt(0)
-	for c.Cmp(zero) > 0 {
+	for c.Cmp(ZERO) > 0 {
 		a.Mul(&a, big.NewInt(10))
 		c.Div(&c, big.NewInt(10))
 	}
@@ -141,5 +145,61 @@ func IsPrime(n:int):
                 return True
     return False
 */
+
+// pseudo primality testing using Fermat's theorem,
+// can report false primes, but never false negatives
+func PseudoPrime(n *big.Int) bool {
+	return ModularExponentiation(n).Text(10) == "1"
+}
+
+func ModularExponentiation(n *big.Int) *big.Int {
+	i := new(big.Int).Sub(n, ONE)
+	res := new(big.Int).Exp(TWO, i, n)
+	return res
+}
+
+// MillerRabin checks if n is a probable prime using k iterations of the Miller-Rabin test
+func MillerRabin(n *big.Int, k int) bool {
+
+	if n.Cmp(TWO) == 0 {
+		return true // 2 is a prime number
+	}
+
+	if n.Cmp(ONE) <= 0 || n.Bit(0) == 0 {
+		return false // n <= 1 or even
+	}
+
+	// write n as 2^s * d + 1 with d odd (by factoring out powers of 2 from n − 1)
+	//s := big.NewInt(0)
+	s := 0
+	d := new(big.Int).Sub(n, ONE)
+
+	for new(big.Int).Mod(d, TWO).Cmp(ZERO) == 0 {
+		d.Div(d, TWO)
+		s++
+	}
+
+	for i := 0; i < k; i++ { // witness loop
+		a, _ := rand.Int(rand.Reader, new(big.Int).Sub(n, TWO))
+		a.Add(a, ONE) // Ensure a is in the range [1, n-1]
+		x := new(big.Int).Exp(a, d, n)
+		if x.Cmp(ONE) == 0 || x.Cmp(new(big.Int).Sub(n, ONE)) == 0 { // # n is always a probable prime to base 1 and n − 1
+			continue
+		}
+		for j := 0; j < s-1; j++ { // inner loop
+			x.Exp(x, TWO, n)
+			if x.Cmp(ONE) == 0 {
+				return false
+			}
+			if x.Cmp(new(big.Int).Sub(n, ONE)) == 0 {
+				break
+			}
+		}
+		if x.Cmp(new(big.Int).Sub(n, ONE)) != 0 {
+			return false
+		}
+	}
+	return true
+}
 
 // FACTORS AND DIVISORS
