@@ -2,6 +2,14 @@ package hex
 
 import "errors"
 
+func XOR(arr1, arr2 []byte) []byte {
+	result := make([]byte, len(arr1))
+	for i := 0; i < len(arr1); i++ {
+		result[i] = arr1[i] ^ arr2[i]
+	}
+	return result
+}
+
 func ToHexString(bytes []byte, toLUpper bool) string {
 	var hexChars string
 	if toLUpper {
