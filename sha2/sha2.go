@@ -1,5 +1,7 @@
 package sha2
 
+import "encoding/binary"
+
 const SHA256_BLOCK_SIZE = 512
 
 // constants [§4.2.2]
@@ -23,20 +25,20 @@ var K = []uint{
 }
 
 func Hash256(data []byte) []byte {
-	l := uint(len(data))
-	H := [8]uint
+	l := len(data)
+	H := make([]uint, 8)
 	copy(H, H0[:8])
 
 	ix := 0
-	block := [64]byte
+	var block [64]byte
 
 	// main loop
 	for i := 0; i < l; i++ {
 		block[ix] = data[i]
 		ix++
 
-		if ix == 64{ // 512 bit blocks
-			SHA256Transform(ref H, block)
+		if ix == 64 { // 512 bit blocks
+			sha256Transform(&H, block)
 			ix = 0
 		}
 	}
@@ -44,119 +46,123 @@ func Hash256(data []byte) []byte {
 	// padding
 
 	if ix < 56 { // size will fit in this block
-	{
-		block[ix] = 0x80; // hex 80 = binary 1000 0000 (append 1 followed by zeroes to data)
+		block[ix] = 0x80 // hex 80 = binary 1000 0000 (append 1 followed by zeroes to data)
 		ix++
 		for ix < 56 {
 			block[ix] = 0x00
 			ix++
 		}
 	} else {
-		block[ix] = 0x80; // hex 80 = binary 1000 0000 (append 1 followed by zeroes to data)
+		block[ix] = 0x80 // hex 80 = binary 1000 0000 (append 1 followed by zeroes to data)
 		ix++
 		for ix < 63 {
 			block[ix] = 0x00
 			ix++
 		}
 
-		SHA256Transform(ref H, Block)
+		sha256Transform(&H, block)
 
 		ix = 0
-		block = [64]byte
+		block = [64]byte{}
 	}
-// append the length
-binary.LittleEndian.PutUint64(lenBytes, lengthInBits)
-for i := 0; i < len.Length; i++ {
-	Block[63 - i] = len[i]
+
+	// Get the length in bits and convert to bytes
+	lengthInBits := uint64(l * 8)
+	lenBytes := make([]byte, 8)
+	binary.LittleEndian.PutUint64(lenBytes, lengthInBits)
+
+	// Append the length bytes to the Block array
+	for i := 0; i < len(lenBytes); i++ {
+		block[63-i] = lenBytes[i]
+	}
+
+	sha256Transform(&H, block)
+
+	return getHashBytes(H)
 }
 
-SHA256Transform(ref H, Block)
+func sha256Transform(H *[]uint, data [64]byte) {
+	var a, b, c, d, e, f, g, h, i, j, t1, t2 uint
+	var m [64]uint
 
-return H.GetHashBytes()
+	for i, j = 0, 0; i < 16; i, j = i+1, j+4 {
+		m[i] = uint(data[j])<<24 | uint(data[j+1])<<16 | uint(data[j+2])<<8 | uint(data[j+3])
+	}
+
+	for i := 16; i < 64; i++ {
+		m[i] = σ1(m[i-2]) + m[i-7] + σ0(m[i-15]) + m[i-16]
+	}
+
+	a = (*H)[0]
+	b = (*H)[1]
+	c = (*H)[2]
+	d = (*H)[3]
+	e = (*H)[4]
+	f = (*H)[5]
+	g = (*H)[6]
+	h = (*H)[7]
+
+	for i = 0; i < 64; i++ {
+
+		t1 = h + Σ1(e) + ch(e, f, g) + K[i] + m[i]
+		t2 = Σ0(a) + maj(a, b, c)
+		h = g
+		g = f
+		f = e
+		e = d + t1
+		d = c
+		c = b
+		b = a
+		a = t1 + t2
+	}
+
+	(*H)[0] += a
+	(*H)[1] += b
+	(*H)[2] += c
+	(*H)[3] += d
+	(*H)[4] += e
+	(*H)[5] += f
+	(*H)[6] += g
+	(*H)[7] += h
 }
-
-func () sha256Transform(H *[]uint, data []byte) {
-            var a, b, c, d, e, f, g, h, i, j, t1, t2 uint
-            m := [64]uint
-
-			for i, j = 0, 0; i < 16; i, j = i+1, j+4 { 
-				m[i] = uint32(data[j])<<24 | uint32(data[j+1])<<16 | uint32(data[j+2])<<8 | uint32(data[j+3]) 
-			}
-
-            for (; i < 64; ++i)
-                m[i] = σ1(m[i - 2]) + m[i - 7] + σ0(m[i - 15]) + m[i - 16];
-
-            a = H[0];
-            b = H[1];
-            c = H[2];
-            d = H[3];
-            e = H[4];
-            f = H[5];
-            g = H[6];
-            h = H[7];
-
-            for (i = 0; i < 64; ++i)
-            {
-                t1 = h + Σ1(e) + Ch(e, f, g) + K[i] + m[i];
-                t2 = Σ0(a) + Maj(a, b, c);
-                h = g;
-                g = f;
-                f = e;
-                e = d + t1;
-                d = c;
-                c = b;
-                b = a;
-                a = t1 + t2;
-            }
-
-            H[0] += a;
-            H[1] += b;
-            H[2] += c;
-            H[3] += d;
-            H[4] += e;
-            H[5] += f;
-            H[6] += g;
-            H[7] += h;
-        }
 
 // Rotates right (circular right shift) value x by n positions [§3.2.4].
-func rotr(x uint32, n uint8) uint32 { 
+func rotr(x uint, n uint8) uint {
 	return (x >> n) | (x << (32 - n))
 }
 
 // Logical functions [§4.1.2].
 func Σ0(x uint) uint { // lsigma0
-	return x.rotr(2) ^ x.rotr(13) ^ x.rotr(22)
+	return rotr(x, 2) ^ rotr(x, 13) ^ rotr(x, 22)
 }
 func Σ1(x uint) uint { //lsigma1
-	return x.rotr(6) ^ x.rotr(11) ^ x.rotr(25)
+	return rotr(x, 6) ^ rotr(x, 11) ^ rotr(x, 25)
 }
 func σ0(x uint) uint { // ssigma0
-	return x.rotr(7) ^ x.rotr(18) ^ (x >> 3)
+	return rotr(x, 7) ^ rotr(x, 18) ^ (x >> 3)
 }
 func σ1(x uint) uint { // ssigma1
-	return x.rotr(17) ^ x.rotr(19) ^ (x >> 10)
+	return rotr(x, 17) ^ rotr(x, 19) ^ (x >> 10)
 }
 func ch(x, y, z uint) uint { // 'choice'
-	return (x & y) ^ (~x & z)
+	return (x & y) ^ (^x & z)
 }
 func maj(x, y, z uint) uint { // 'majority'
 	return (x & y) ^ (x & z) ^ (y & z)
 }
 
-// GetHashBytes converts an array of uint32 to a byte array 
-func getHashBytes(H []uint32) []byte { 
-	hash := make([]byte, 32) 
-	for i := 0; i < 4; i++ { 
-		hash[i] = byte((H[0] >> (24 - i*8)) & 0x000000ff) 
-		hash[i+4] = byte((H[1] >> (24 - i*8)) & 0x000000ff) 
-		hash[i+8] = byte((H[2] >> (24 - i*8)) & 0x000000ff) 
-		hash[i+12] = byte((H[3] >> (24 - i*8)) & 0x000000ff) 
-		hash[i+16] = byte((H[4] >> (24 - i*8)) & 0x000000ff) 
-		hash[i+20] = byte((H[5] >> (24 - i*8)) & 0x000000ff) 
-		hash[i+24] = byte((H[6] >> (24 - i*8)) & 0x000000ff) 
-		hash[i+28] = byte((H[7] >> (24 - i*8)) & 0x000000ff) 
-	} 
-	return hash 
+// GetHashBytes converts an array of uint32 to a byte array
+func getHashBytes(H []uint) []byte {
+	hash := make([]byte, 32)
+	for i := 0; i < 4; i++ {
+		hash[i] = byte((H[0] >> (24 - i*8)) & 0x000000ff)
+		hash[i+4] = byte((H[1] >> (24 - i*8)) & 0x000000ff)
+		hash[i+8] = byte((H[2] >> (24 - i*8)) & 0x000000ff)
+		hash[i+12] = byte((H[3] >> (24 - i*8)) & 0x000000ff)
+		hash[i+16] = byte((H[4] >> (24 - i*8)) & 0x000000ff)
+		hash[i+20] = byte((H[5] >> (24 - i*8)) & 0x000000ff)
+		hash[i+24] = byte((H[6] >> (24 - i*8)) & 0x000000ff)
+		hash[i+28] = byte((H[7] >> (24 - i*8)) & 0x000000ff)
+	}
+	return hash
 }
-
