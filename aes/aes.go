@@ -7,16 +7,29 @@ func Encrypt(input []byte, output []byte, key []uint32, keysize int) {
 			state[j][i] = input[i*4+j]
 		}
 	}
+
+	var rounds int
+	switch keysize {
+	case 128:
+		rounds = 10
+	case 192:
+		rounds = 12
+	case 256:
+		rounds = 14
+	}
+
 	addRoundKey(&state, key)
-	for round := 1; round < 10; round++ {
+
+	for round := 1; round < rounds; round++ {
 		subBytes(&state)
 		shiftRows(&state)
 		mixColumns(&state)
 		addRoundKey(&state, key[round*4:])
 	}
+
 	subBytes(&state)
 	shiftRows(&state)
-	addRoundKey(&state, key[40:])
+	addRoundKey(&state, key[rounds*4:])
 	for i := 0; i < 4; i++ {
 		for j := 0; j < 4; j++ {
 			output[i*4+j] = state[j][i]
@@ -31,8 +44,19 @@ func Decrypt(input []byte, output []byte, key []uint32, keysize int) {
 			state[j][i] = input[i*4+j]
 		}
 	}
-	addRoundKey(&state, key[40:])
-	for round := 9; round > 0; round-- {
+
+	var rounds int
+	switch keysize {
+	case 128:
+		rounds = 10
+	case 192:
+		rounds = 12
+	case 256:
+		rounds = 14
+	}
+
+	addRoundKey(&state, key[rounds*4:])
+	for round := rounds - 1; round > 0; round-- {
 		invShiftRows(&state)
 		invSubBytes(&state)
 		addRoundKey(&state, key[round*4:])
@@ -48,7 +72,7 @@ func Decrypt(input []byte, output []byte, key []uint32, keysize int) {
 	}
 }
 
-func keyExpansion(key []byte, w []uint32, keysize int) {
+func KeyExpansion(key []byte, w []uint32, keysize int) {
 	Nb := 4
 	var Nr, Nk int
 	var temp uint32
@@ -168,7 +192,7 @@ func mixColumns(state *[4][4]byte) {
 	}
 }
 
-func invMixColumns(state [4][4]byte) {
+func invMixColumns(state *[4][4]byte) {
 	var col [4]byte
 	for c := 0; c < 4; c++ {
 		for i := 0; i < 4; i++ {
