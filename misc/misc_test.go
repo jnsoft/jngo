@@ -124,3 +124,18 @@ func TestFind(t *testing.T) {
 		AssertEqual(t, best, best_fruit)
 	})
 }
+
+func TestSubArray(t *testing.T) {
+	t.Run("test sub array", func(t *testing.T) {
+		numbers := []int{1, 3, 4, 5, 6, 7, 8, 9, 10}
+
+		sub_arr1 := SubArray(numbers, 8)
+		sub_arr2 := SubArray(numbers, 1, 3)
+
+		numbers[8] = 0
+		numbers[1] = 0
+
+		CollectionAssertEqual(t, sub_arr1, []int{10})
+		CollectionAssertEqual(t, sub_arr2, []int{3, 4, 5})
+	})
+}
