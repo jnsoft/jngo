@@ -1,5 +1,199 @@
 package aes
 
+func Encrypt(input []byte, output []byte, key []uint32, keysize int) {
+	var state [4][4]byte
+	for i := 0; i < 4; i++ {
+		for j := 0; j < 4; j++ {
+			state[j][i] = input[i*4+j]
+		}
+	}
+	addRoundKey(&state, key)
+	for round := 1; round < 10; round++ {
+		subBytes(&state)
+		shiftRows(&state)
+		mixColumns(&state)
+		addRoundKey(&state, key[round*4:])
+	}
+	subBytes(&state)
+	shiftRows(&state)
+	addRoundKey(&state, key[40:])
+	for i := 0; i < 4; i++ {
+		for j := 0; j < 4; j++ {
+			output[i*4+j] = state[j][i]
+		}
+	}
+}
+
+func Decrypt(input []byte, output []byte, key []uint32, keysize int) {
+	var state [4][4]byte
+	for i := 0; i < 4; i++ {
+		for j := 0; j < 4; j++ {
+			state[j][i] = input[i*4+j]
+		}
+	}
+	addRoundKey(&state, key[40:])
+	for round := 9; round > 0; round-- {
+		invShiftRows(&state)
+		invSubBytes(&state)
+		addRoundKey(&state, key[round*4:])
+		invMixColumns(&state)
+	}
+	invShiftRows(&state)
+	invSubBytes(&state)
+	addRoundKey(&state, key)
+	for i := 0; i < 4; i++ {
+		for j := 0; j < 4; j++ {
+			output[i*4+j] = state[j][i]
+		}
+	}
+}
+
+func keyExpansion(key []byte, w []uint32, keysize int) {
+	Nb := 4
+	var Nr, Nk int
+	var temp uint32
+	Rcon := []uint32{0x01000000, 0x02000000, 0x04000000, 0x08000000, 0x10000000, 0x20000000, 0x40000000, 0x80000000, 0x1b000000, 0x36000000, 0x6c000000, 0xd8000000, 0xab000000, 0x4d000000, 0x9a000000}
+	switch keysize {
+	case 128:
+		Nr = 10
+		Nk = 4
+	case 192:
+		Nr = 12
+		Nk = 6
+	case 256:
+		Nr = 14
+		Nk = 8
+	default:
+		return
+	}
+	for idx := 0; idx < Nk; idx++ {
+		w[idx] = uint32(key[4*idx])<<24 | uint32(key[4*idx+1])<<16 | uint32(key[4*idx+2])<<8 | uint32(key[4*idx+3])
+	}
+	for idx := Nk; idx < Nb*(Nr+1); idx++ {
+		temp = w[idx-1]
+		if idx%Nk == 0 {
+			temp = subWord(ke_rotword(temp)) ^ Rcon[(idx-1)/Nk]
+		} else if Nk > 6 && idx%Nk == 4 {
+			temp = subWord(temp)
+		}
+		w[idx] = w[idx-Nk] ^ temp
+	}
+}
+
+func addRoundKey(state *[4][4]byte, w []uint32) {
+	var subkey [4]byte
+	for c := 0; c < 4; c++ {
+		subkey[0] = byte(w[c] >> 24)
+		subkey[1] = byte(w[c] >> 16)
+		subkey[2] = byte(w[c] >> 8)
+		subkey[3] = byte(w[c])
+		for r := 0; r < 4; r++ {
+			state[r][c] ^= subkey[r]
+		}
+	}
+}
+
+func subBytes(state *[4][4]byte) {
+	for i := 0; i < 4; i++ {
+		for j := 0; j < 4; j++ {
+			state[i][j] = aes_sbox[state[i][j]>>4][state[i][j]&0x0F]
+		}
+	}
+}
+
+func invSubBytes(state *[4][4]byte) {
+	for i := 0; i < 4; i++ {
+		for j := 0; j < 4; j++ {
+			state[i][j] = aes_invsbox[state[i][j]>>4][state[i][j]&0x0F]
+		}
+	}
+}
+
+func shiftRows(state *[4][4]byte) {
+	var t byte
+	// Shift row 1
+	t = state[1][0]
+	state[1][0] = state[1][1]
+	state[1][1] = state[1][2]
+	state[1][2] = state[1][3]
+	state[1][3] = t
+	// Shift row 2
+	t = state[2][0]
+	state[2][0] = state[2][2]
+	state[2][2] = t
+	t = state[2][1]
+	state[2][1] = state[2][3]
+	state[2][3] = t
+	// Shift row 3
+	t = state[3][0]
+	state[3][0] = state[3][3]
+	state[3][3] = state[3][2]
+	state[3][2] = state[3][1]
+	state[3][1] = t
+}
+
+func invShiftRows(state *[4][4]byte) {
+	var t byte
+	// Shift row 1
+	t = state[1][3]
+	state[1][3] = state[1][2]
+	state[1][2] = state[1][1]
+	state[1][1] = state[1][0]
+	state[1][0] = t
+	// Shift row 2
+	t = state[2][3]
+	state[2][3] = state[2][1]
+	state[2][1] = t
+	t = state[2][2]
+	state[2][2] = state[2][0]
+	state[2][0] = t
+	// Shift row 3
+	t = state[3][3]
+	state[3][3] = state[3][0]
+	state[3][0] = state[3][1]
+	state[3][1] = state[3][2]
+	state[3][2] = t
+}
+
+func mixColumns(state *[4][4]byte) {
+	var col [4]byte
+	for c := 0; c < 4; c++ {
+		for i := 0; i < 4; i++ {
+			col[i] = state[i][c]
+		}
+		state[0][c] = gf_mul[col[0]][0] ^ gf_mul[col[1]][1] ^ col[2] ^ col[3]
+		state[1][c] = col[0] ^ gf_mul[col[1]][0] ^ gf_mul[col[2]][1] ^ col[3]
+		state[2][c] = col[0] ^ col[1] ^ gf_mul[col[2]][0] ^ gf_mul[col[3]][1]
+		state[3][c] = gf_mul[col[0]][1] ^ col[1] ^ col[2] ^ gf_mul[col[3]][0]
+	}
+}
+
+func invMixColumns(state [4][4]byte) {
+	var col [4]byte
+	for c := 0; c < 4; c++ {
+		for i := 0; i < 4; i++ {
+			col[i] = state[i][c]
+		}
+		state[0][c] = gf_mul[col[0]][5] ^ gf_mul[col[1]][3] ^ gf_mul[col[2]][4] ^ gf_mul[col[3]][2]
+		state[1][c] = gf_mul[col[0]][2] ^ gf_mul[col[1]][5] ^ gf_mul[col[2]][3] ^ gf_mul[col[3]][4]
+		state[2][c] = gf_mul[col[0]][4] ^ gf_mul[col[1]][2] ^ gf_mul[col[2]][5] ^ gf_mul[col[3]][3]
+		state[3][c] = gf_mul[col[0]][3] ^ gf_mul[col[1]][4] ^ gf_mul[col[2]][2] ^ gf_mul[col[3]][5]
+	}
+}
+
+func subWord(word uint32) uint32 {
+	var result uint32
+	result = uint32(aes_sbox[(word>>4)&0x0F][word&0x0F])
+	result += uint32(aes_sbox[(word>>12)&0x0F][(word>>8)&0x0F]) << 8
+	result += uint32(aes_sbox[(word>>20)&0x0F][(word>>16)&0x0F]) << 16
+	result += uint32(aes_sbox[(word>>28)&0x0F][(word>>24)&0x0F]) << 24
+	return result
+}
+
+func ke_rotword(x uint32) uint32 {
+	return (x << 8) | (x >> 24)
+}
+
 var aes_sbox = [16][16]byte{
 	{0x63, 0x7C, 0x77, 0x7B, 0xF2, 0x6B, 0x6F, 0xC5, 0x30, 0x01, 0x67, 0x2B, 0xFE, 0xD7, 0xAB, 0x76},
 	{0xCA, 0x82, 0xC9, 0x7D, 0xFA, 0x59, 0x47, 0xF0, 0xAD, 0xD4, 0xA2, 0xAF, 0x9C, 0xA4, 0x72, 0xC0},
