@@ -1,6 +1,88 @@
 package aes
 
-func Encrypt(input []byte, output []byte, key []uint32, keysize int) {
+import (
+	"encoding/binary"
+
+	"github.com/jnsoft/jngo/hex"
+)
+
+const (
+	NB         int = 4   // block size (in words): no of columns in state (fixed at 4 for AES)
+	BLOCK_SIZE int = 128 // bits
+)
+
+func ECB_Encrypt(plaintext, key []byte) []byte {
+	plaintext = PKCS7pad(plaintext, 16)
+	ciphertext := make([]byte, len(plaintext))
+	roundKeys := KeyExpansion(key)
+
+	// Process each block of 16 bytes
+	for i := 0; i < len(plaintext); i += 16 {
+		Cipher(plaintext[i:i+16], ciphertext[i:i+16], roundKeys)
+	}
+	return ciphertext
+}
+
+func ECB_Decrypt(ciphertext, key []byte) []byte {
+	plaintext := make([]byte, len(ciphertext))
+	roundKeys := KeyExpansion(key)
+
+	// Process each block of 16 bytes
+	for i := 0; i < len(plaintext); i += 16 {
+		Decipher(ciphertext[i:i+16], plaintext[i:i+16], roundKeys)
+	}
+	plaintext = PKCS7unpad(plaintext)
+	return plaintext
+}
+
+func CBC_Encrypt(plaintext, key, IV []byte) []byte {
+	plaintext = PKCS7pad(plaintext, 16)
+	ciphertext := make([]byte, len(plaintext))
+	roundKeys := KeyExpansion(key)
+
+	// Process each block of 16 bytes
+	for i := 0; i < len(plaintext); i += 16 {
+		xored := hex.XOR(IV, plaintext[i:i+16])
+		Cipher(xored, ciphertext[i:i+16], roundKeys)
+		IV = ciphertext[i : i+16]
+	}
+	return ciphertext
+}
+
+func CBC_Decrypt(ciphertext, key, IV []byte) []byte {
+	plaintext := make([]byte, len(ciphertext))
+	roundKeys := KeyExpansion(key)
+
+	// Process each block of 16 bytes
+	for i := 0; i < len(plaintext); i += 16 {
+		temp := make([]byte, 16)
+		Decipher(ciphertext[i:i+16], temp, roundKeys)
+		copy(plaintext[i:i+16], hex.XOR(IV, temp))
+		IV = ciphertext[i : i+16]
+	}
+	plaintext = PKCS7unpad(plaintext)
+	return plaintext
+}
+
+func PKCS7pad(data []byte, blockSize int) []byte {
+	pad := blockSize - len(data)%blockSize
+	newLen := len(data) + pad
+	block := make([]byte, newLen)
+	copy(block, data)
+	for i := 0; i < pad; i++ {
+		block[len(data)+i] = byte(pad)
+	}
+	return block
+}
+
+func PKCS7unpad(data []byte) []byte {
+	pad := data[len(data)-1]
+	return data[:len(data)-int(pad)]
+}
+
+// AES Cipher, encrypt 16-byte input with Rijndael algorithm
+func Cipher(input []byte, output []byte, keys []uint32) {
+	nr := len(keys)/NB - 1 // no of rounds: 10/12/14 for 128/192/256-bit keys
 	var state [4][4]byte
 	for i := 0; i < 4; i++ {
 		for j := 0; j < 4; j++ {
@@ -8,28 +90,18 @@ func Encrypt(input []byte, output []byte, key []uint32, keysize int) {
 		}
 	}
 
-	var rounds int
-	switch keysize {
-	case 128:
-		rounds = 10
-	case 192:
-		rounds = 12
-	case 256:
-		rounds = 14
-	}
+	addRoundKey(&state, keys)
 
-	addRoundKey(&state, key)
-
-	for round := 1; round < rounds; round++ {
+	for round := 1; round < nr; round++ {
 		subBytes(&state)
 		shiftRows(&state)
 		mixColumns(&state)
-		addRoundKey(&state, key[round*4:])
+		addRoundKey(&state, keys[round*4:])
 	}
 
 	subBytes(&state)
 	shiftRows(&state)
-	addRoundKey(&state, key[rounds*4:])
+	addRoundKey(&state, keys[nr*4:])
 	for i := 0; i < 4; i++ {
 		for j := 0; j < 4; j++ {
 			output[i*4+j] = state[j][i]
@@ -37,7 +109,8 @@ func Encrypt(input []byte, output []byte, key []uint32, keysize int) {
 	}
 }
 
-func Decrypt(input []byte, output []byte, key []uint32, keysize int) {
+func Decipher(input []byte, output []byte, keys []uint32) {
+	nr := len(keys)/NB - 1 // no of rounds: 10/12/14 for 128/192/256-bit keys
 	var state [4][4]byte
 	for i := 0; i < 4; i++ {
 		for j := 0; j < 4; j++ {
@@ -45,26 +118,16 @@ func Decrypt(input []byte, output []byte, key []uint32, keysize int) {
 		}
 	}
 
-	var rounds int
-	switch keysize {
-	case 128:
-		rounds = 10
-	case 192:
-		rounds = 12
-	case 256:
-		rounds = 14
-	}
-
-	addRoundKey(&state, key[rounds*4:])
-	for round := rounds - 1; round > 0; round-- {
+	addRoundKey(&state, keys[nr*4:])
+	for round := nr - 1; round > 0; round-- {
 		invShiftRows(&state)
 		invSubBytes(&state)
-		addRoundKey(&state, key[round*4:])
+		addRoundKey(&state, keys[round*4:])
 		invMixColumns(&state)
 	}
 	invShiftRows(&state)
 	invSubBytes(&state)
-	addRoundKey(&state, key)
+	addRoundKey(&state, keys)
 	for i := 0; i < 4; i++ {
 		for j := 0; j < 4; j++ {
 			output[i*4+j] = state[j][i]
@@ -72,28 +135,23 @@ func Decrypt(input []byte, output []byte, key []uint32, keysize int) {
 	}
 }
 
-func KeyExpansion(key []byte, w []uint32, keysize int) {
-	Nb := 4
-	var Nr, Nk int
-	var temp uint32
+// Perform Key Expansion to generate a Key Schedule
+// Returns byte[] expanded key schedule as Nr+1 x NB bytes
+func KeyExpansion(key []byte) []uint32 {
+	Nk := len(key) / 4               // key length (in 32-bit words): 4/6/8 for 128/192/256-bit keys
+	Nr := Nk + 6                     // no of rounds: 10/12/14 for 128/192/256-bit keys
+	keyScheduleSize := NB * (Nr + 1) //The size of the key schedule depends on the number of rounds
+
+	w := make([]uint32, keyScheduleSize)
+
+	// Rcon is Round Constant used for the Key Expansion [2^(r-1) in GF(2^8)]
 	Rcon := []uint32{0x01000000, 0x02000000, 0x04000000, 0x08000000, 0x10000000, 0x20000000, 0x40000000, 0x80000000, 0x1b000000, 0x36000000, 0x6c000000, 0xd8000000, 0xab000000, 0x4d000000, 0x9a000000}
-	switch keysize {
-	case 128:
-		Nr = 10
-		Nk = 4
-	case 192:
-		Nr = 12
-		Nk = 6
-	case 256:
-		Nr = 14
-		Nk = 8
-	default:
-		return
-	}
+
+	var temp uint32
 	for idx := 0; idx < Nk; idx++ {
 		w[idx] = uint32(key[4*idx])<<24 | uint32(key[4*idx+1])<<16 | uint32(key[4*idx+2])<<8 | uint32(key[4*idx+3])
 	}
-	for idx := Nk; idx < Nb*(Nr+1); idx++ {
+	for idx := Nk; idx < keyScheduleSize; idx++ {
 		temp = w[idx-1]
 		if idx%Nk == 0 {
 			temp = subWord(ke_rotword(temp)) ^ Rcon[(idx-1)/Nk]
@@ -102,8 +160,10 @@ func KeyExpansion(key []byte, w []uint32, keysize int) {
 		}
 		w[idx] = w[idx-Nk] ^ temp
 	}
+	return w
 }
 
+// xor Round Key into state S
 func addRoundKey(state *[4][4]byte, w []uint32) {
 	var subkey [4]byte
 	for c := 0; c < 4; c++ {
@@ -117,6 +177,7 @@ func addRoundKey(state *[4][4]byte, w []uint32) {
 	}
 }
 
+// apply SBox to state S
 func subBytes(state *[4][4]byte) {
 	for i := 0; i < 4; i++ {
 		for j := 0; j < 4; j++ {
@@ -133,6 +194,8 @@ func invSubBytes(state *[4][4]byte) {
 	}
 }
 
+// shift row r of state S left by r bytes
+// note that this will work for Nb=4,5,6, but not 7,8 (always 4 for AES):
 func shiftRows(state *[4][4]byte) {
 	var t byte
 	// Shift row 1
@@ -179,16 +242,24 @@ func invShiftRows(state *[4][4]byte) {
 	state[3][2] = t
 }
 
+// combine bytes of each col of state S
+// Each column is treated as a four-term polynomial b(x)=b_{3}x^3+b_{2}x^2+b_1x+b_{0} which are elements within the field GF(2^8}
+// Each column is multiplied with a fixed polynomial a(x)=3x^{3}+x^{2}+x+2 modulo x^{4}+1
+// the inverse of this polynomial is a^{-1}(x)=11x^{3}+13x^{2}+9x+14
 func mixColumns(state *[4][4]byte) {
 	var col [4]byte
 	for c := 0; c < 4; c++ {
 		for i := 0; i < 4; i++ {
 			col[i] = state[i][c]
 		}
-		state[0][c] = gf_mul[col[0]][0] ^ gf_mul[col[1]][1] ^ col[2] ^ col[3]
-		state[1][c] = col[0] ^ gf_mul[col[1]][0] ^ gf_mul[col[2]][1] ^ col[3]
-		state[2][c] = col[0] ^ col[1] ^ gf_mul[col[2]][0] ^ gf_mul[col[3]][1]
-		state[3][c] = gf_mul[col[0]][1] ^ col[1] ^ col[2] ^ gf_mul[col[3]][0]
+		state[0][c] = gf_mul[col[0]][0] ^ gf_mul[col[1]][1] ^ col[2] ^ col[3] // 2*a0 + 3*a1 + a2 + a3
+		state[1][c] = col[0] ^ gf_mul[col[1]][0] ^ gf_mul[col[2]][1] ^ col[3] // a0 * 2*a1 + 3*a2 + a3
+		state[2][c] = col[0] ^ col[1] ^ gf_mul[col[2]][0] ^ gf_mul[col[3]][1] // a0 + a1 + 2*a2 + 3*a3
+		state[3][c] = gf_mul[col[0]][1] ^ col[1] ^ col[2] ^ gf_mul[col[3]][0] // 3*a0 + a1 + a2 + 2*a3
+		//state[0][c] = gMul(0x02, state[0][c]) ^ gMul(0x03, state[1][c]) ^ state[2][c] ^ state[3][c] // 2*a0 + 3*a1 + a2 + a3
+		//state[1][c] = state[0][c] ^ gMul(0x02, state[1][c]) ^ gMul(0x03, state[2][c]) ^ state[3][c] // a0 * 2*a1 + 3*a2 + a3
+		//state[2][c] = state[0][c] ^ state[1][c] ^ gMul(0x02, state[2][c]) ^ gMul(0x03, state[3][c]) // a0 + a1 + 2*a2 + 3*a3
+		//state[3][c] = gMul(0x03, state[0][c]) ^ state[1][c] ^ state[2][c] ^ gMul(0x02, state[3][c]) // 3*a0 + a1 + a2 + 2*a3
 	}
 }
 
@@ -198,13 +269,14 @@ func invMixColumns(state *[4][4]byte) {
 		for i := 0; i < 4; i++ {
 			col[i] = state[i][c]
 		}
-		state[0][c] = gf_mul[col[0]][5] ^ gf_mul[col[1]][3] ^ gf_mul[col[2]][4] ^ gf_mul[col[3]][2]
-		state[1][c] = gf_mul[col[0]][2] ^ gf_mul[col[1]][5] ^ gf_mul[col[2]][3] ^ gf_mul[col[3]][4]
-		state[2][c] = gf_mul[col[0]][4] ^ gf_mul[col[1]][2] ^ gf_mul[col[2]][5] ^ gf_mul[col[3]][3]
-		state[3][c] = gf_mul[col[0]][3] ^ gf_mul[col[1]][4] ^ gf_mul[col[2]][2] ^ gf_mul[col[3]][5]
+		state[0][c] = gf_mul[col[0]][5] ^ gf_mul[col[1]][3] ^ gf_mul[col[2]][4] ^ gf_mul[col[3]][2] // a0 = 14b0 + 11b1 + 13b2 +  9b3
+		state[1][c] = gf_mul[col[0]][2] ^ gf_mul[col[1]][5] ^ gf_mul[col[2]][3] ^ gf_mul[col[3]][4] // a1 =  9b0 + 14b1 + 11b2 + 13b3
+		state[2][c] = gf_mul[col[0]][4] ^ gf_mul[col[1]][2] ^ gf_mul[col[2]][5] ^ gf_mul[col[3]][3] // a2 = 13b0 +  9b1 + 14b2 + 11b3
+		state[3][c] = gf_mul[col[0]][3] ^ gf_mul[col[1]][4] ^ gf_mul[col[2]][2] ^ gf_mul[col[3]][5] // a3 = 11b0 + 13b1 +  9b2 + 14b3
 	}
 }
 
+// apply SBox to 4-byte word w
 func subWord(word uint32) uint32 {
 	var result uint32
 	result = uint32(aes_sbox[(word>>4)&0x0F][word&0x0F])
@@ -214,8 +286,26 @@ func subWord(word uint32) uint32 {
 	return result
 }
 
+// rotate 4-byte word w left by one byte
 func ke_rotword(x uint32) uint32 {
 	return (x << 8) | (x >> 24)
+}
+
+// GMul performs Galois Field (256) multiplication of two bytes
+func gMul(a, b byte) byte {
+	var p byte = 0
+	for counter := 0; counter < 8; counter++ {
+		if (b & 1) != 0 {
+			p ^= a
+		}
+		hi_bit_set := (a & 0x80) != 0
+		a <<= 1
+		if hi_bit_set {
+			a ^= 0x1B // x^8 + x^4 + x^3 + x + 1
+		}
+		b >>= 1
+	}
+	return p
 }
 
 var aes_sbox = [16][16]byte{
@@ -385,4 +475,17 @@ var gf_mul = [256][6]byte{
 	{0xef, 0x15, 0x6b, 0x84, 0xae, 0xbb}, {0xed, 0x16, 0x62, 0x8f, 0xa3, 0xb5},
 	{0xe3, 0x1f, 0x5d, 0xbe, 0x80, 0x9f}, {0xe1, 0x1c, 0x54, 0xb5, 0x8d, 0x91},
 	{0xe7, 0x19, 0x4f, 0xa8, 0x9a, 0x83}, {0xe5, 0x1a, 0x46, 0xa3, 0x97, 0x8d},
+}
+
+// If systems sending and receiving data can have different endianness, always transmit data in a particular order.
+// This means that the order of bytes in the array may have to be reversed either before sending them or after receiving them.
+// A common convention is to transmit data in network byte order (big-endian order).
+func toBytesBigEndian(n uint64, BigE bool) []byte {
+	bytes := make([]byte, 8)
+	if BigE {
+		binary.BigEndian.PutUint64(bytes, n)
+	} else {
+		binary.LittleEndian.PutUint64(bytes, n)
+	}
+	return bytes
 }
