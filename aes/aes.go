@@ -80,7 +80,7 @@ func CTR_Cipher(data, key, nonce []byte, networkByteOrderCounter bool) []byte {
 		copy(IV[8:], toBytesBigEndian(uint64((i+1)/16), networkByteOrderCounter))
 		encryptedIV := make([]byte, 16)
 		Cipher(IV, encryptedIV, roundKeys)
-		for j := i; j < i+BLOCK_SIZE/8; j++ {
+		for j := i; j < i+BLOCK_SIZE/8 && j < len(data); j++ {
 			ciphertext[j] = data[j] ^ encryptedIV[j-i] // xor
 		}
 	}
