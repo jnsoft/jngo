@@ -64,6 +64,29 @@ func CBC_Decrypt(ciphertext, key, IV []byte) []byte {
 	return plaintext
 }
 
+// needs secure PRF, unlike CBC and others that needs secure invertible PRF
+func CTR_Cipher(data, key, nonce []byte, networkByteOrderCounter bool) []byte {
+	if len(nonce) != 8 {
+		panic("nonce must be 64 bits")
+	}
+
+	ciphertext := make([]byte, len(data))
+	roundKeys := KeyExpansion(key)
+
+	// Process each block of 16 bytes
+	for i := 0; i < len(data); i += 16 { // i is used for counter: IV = nonce || ctr
+		IV := make([]byte, BLOCK_SIZE/8)
+		copy(IV, nonce)
+		copy(IV[8:], toBytesBigEndian(uint64((i+1)/16), networkByteOrderCounter))
+		encryptedIV := make([]byte, 16)
+		Cipher(IV, encryptedIV, roundKeys)
+		for j := i; j < i+BLOCK_SIZE/8; j++ {
+			ciphertext[j] = data[j] ^ encryptedIV[j-i] // xor
+		}
+	}
+	return ciphertext
+}
+
 func PKCS7pad(data []byte, blockSize int) []byte {
 	pad := blockSize - len(data)%blockSize
 	newLen := len(data) + pad

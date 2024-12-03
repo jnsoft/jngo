@@ -58,3 +58,13 @@ func TestCBC(t *testing.T) {
 		CollectionAssertEqual(t, decrypted, NIST_PLAINTEXT)
 	})
 }
+
+func TestCTR(t *testing.T) {
+	t.Run("CTR Encode / Decode", func(t *testing.T) {
+		nonce := make([]byte, 8)
+		nonce[len(nonce)-1] = 1
+		ciphertext := CTR_Cipher(NIST_PLAINTEXT, KEY, nonce, true)
+		decrypted := CTR_Cipher(ciphertext, KEY, nonce, true)
+		CollectionAssertEqual(t, decrypted, NIST_PLAINTEXT)
+	})
+}
