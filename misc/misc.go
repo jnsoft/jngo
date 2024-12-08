@@ -93,3 +93,14 @@ func Find[A any](items []A, predicate func(A) bool) (value A, found bool) {
 	}
 	return
 }
+
+// / length ...int means it's a variadic parameter, it's optional
+func SubArray[T any](data []T, index int, length ...int) []T {
+	l := len(data) - index
+	if len(length) > 0 && length[0] != -1 {
+		l = length[0]
+	}
+	result := make([]T, l)
+	copy(result, data[index:index+l])
+	return result
+}
