@@ -58,11 +58,14 @@ func (pq *PriorityQueue[T]) Dequeue() (T, error) {
 
 func (pq *PriorityQueue[T]) PrettyPrint() string {
 	var sb strings.Builder
-	for i := 1; i <= pq.N; i++ {
-		sb.WriteString(fmt.Sprintf("%v", pq.pq[i]))
-		if i < pq.N {
+	fst := true
+	for item := range pq.GetEnumerator() {
+		if !fst {
 			sb.WriteString("->")
+		} else {
+			fst = false
 		}
+		sb.WriteString(fmt.Sprintf("%v", item))
 	}
 	return sb.String()
 }
@@ -74,8 +77,17 @@ func (pq *PriorityQueue[T]) Get(index int) T {
 func (pq *PriorityQueue[T]) GetEnumerator() <-chan T {
 	ch := make(chan T)
 	go func() {
-		for i := 1; i <= pq.N; i++ {
-			ch <- pq.pq[i]
+		tempPQ := NewPriorityQueue(pq.less)
+		tempPQ.pq = append(tempPQ.pq, pq.pq[1:pq.N+1]...)
+		tempPQ.N = pq.N
+
+		for !tempPQ.IsEmpty() {
+			v, err := tempPQ.Dequeue()
+			if err == nil {
+				ch <- v
+			} else {
+				panic("PriorityQueue->GetEnumerator" + err.Error())
+			}
 		}
 		close(ch)
 	}()
