@@ -1,6 +1,7 @@
 package pqueue
 
 import (
+	"math/rand"
 	"testing"
 
 	. "github.com/jnsoft/jngo/testhelper"
@@ -8,7 +9,6 @@ import (
 
 func TestQueue(t *testing.T) {
 	t.Run("integer min priority queue", func(t *testing.T) {
-		//q := new(PriorityQueue[int])
 
 		q := NewPriorityQueue[int](func(i, j int) bool { return i < j })
 
@@ -59,4 +59,23 @@ func TestQueue(t *testing.T) {
 		string_rep := q.PrettyPrint()
 		AssertEqual(t, string_rep, "1->2->3")
 	})
+
+	t.Run("float min priority queue", func(t *testing.T) {
+
+		q := NewPriorityQueue[float64](func(i, j float64) bool { return i < j })
+
+		for i := 0; i < 10000; i++ {
+			r := rand.New(rand.NewSource(42))
+			d := r.Float64()
+			q.Enqueue(d)
+		}
+
+		old_val := -1.0
+		for !q.IsEmpty() {
+			val, err := q.Dequeue()
+			AssertNil(t, err)
+			AssertTrue(t, val >= old_val)
+		}
+	})
+
 }
