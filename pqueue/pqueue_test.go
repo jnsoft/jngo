@@ -151,4 +151,55 @@ func TestPriorityQueue(t *testing.T) {
 		AssertTrue(t, testOk)
 	})
 
+	t.Run("complex task priority queue", func(t *testing.T) {
+
+		type Task struct {
+			prio int
+			time int
+			kind string
+		}
+
+		less := func(i, j Task) bool {
+			if i.prio != j.prio {
+				return i.prio < j.prio
+			}
+			if i.time != j.time {
+				return i.time < j.time
+			}
+			return i.kind < j.kind
+		}
+
+		pq := NewPriorityQueue(less)
+
+		tasks := []Task{
+			{prio: 3, time: 10, kind: "B"},
+			{prio: 1, time: 20, kind: "A"},
+			{prio: 2, time: 15, kind: "C"},
+			{prio: 1, time: 10, kind: "B"},
+			{prio: 2, time: 15, kind: "A"},
+		}
+
+		expectedOrder := []Task{
+			{prio: 1, time: 10, kind: "B"},
+			{prio: 1, time: 20, kind: "A"},
+			{prio: 2, time: 15, kind: "A"},
+			{prio: 2, time: 15, kind: "C"},
+			{prio: 3, time: 10, kind: "B"},
+		}
+
+		for _, task := range tasks {
+			pq.Enqueue(task)
+		}
+
+		ix := 0
+		for !pq.IsEmpty() {
+			v, err := pq.Dequeue()
+			AssertNil(t, err)
+			AssertEqual(t, v, expectedOrder[ix])
+			ix++
+		}
+
+		AssertEqual(t, ix, len(expectedOrder))
+	})
+
 }
