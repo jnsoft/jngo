@@ -2,6 +2,13 @@ package testhelper
 
 import "testing"
 
+func AssertNil(t *testing.T, got any) {
+	t.Helper()
+	if got != nil {
+		t.Errorf("Assert Nil failed")
+	}
+}
+
 func AssertTrue(t *testing.T, got bool) {
 	t.Helper()
 	if !got {
