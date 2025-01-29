@@ -21,6 +21,19 @@ func GetPrime(securityLevel int) *big.Int {
 	return new(big.Int).Sub(new(big.Int).Exp(big.NewInt(2), big.NewInt(int64(SecurityLevels[securityLevel])), nil), big.NewInt(1))
 }
 
+func CreateSecretsFromKey(key []byte, noOfShares, minShares int, secLevel int) ([]string, error){
+	secret := bytesToBigInt(key)
+	shares, err := CreateShares(secret, noOfShares, minShares, secLevel)
+
+	// return shares, converted to []byte -> base64
+}
+
+func GetKeyFromSecrets(secrets []string, xs []int, secLevel int) ([]byte, error){
+	ys := secrets -> []byte (from base64) -> []*big.int
+	secret, err := RecoverSecret(ys, xs, secLevel)
+	return bigIntToBytes(secret)
+}
+
 func CreateShares(secret, shares, minShares, securityLevel int) ([]*big.Int, error) {
 	if secret < 0 {
 		return nil, errors.New("secret must be greater than 0")
@@ -89,4 +102,25 @@ func BigIntegerRange(start, end int) []*big.Int {
 		result = append(result, big.NewInt(int64(i)))
 	}
 	return result
+}
+
+func GetSecurityLevel(secretSizeInBytes int) int {
+	for i := 0; i < len(SecurityLevels)-1; i++ {
+		if SecurityLevels[i] < secretSizeInBytes*8 {
+			continue
+		} else {
+			return i
+		}
+	}
+	return len(SecurityLevels) - 1
+}
+
+func bytesToBigInt(b []byte) *big.Int {
+	bigInt := new(big.Int)
+	bigInt.SetBytes(b)
+	return bigInt
+}
+
+func bigIntToBytes(bi *big.Int) []byte {
+	return bi.Bytes()
 }

@@ -1,6 +1,9 @@
 package misc
 
-import "math"
+import (
+	"math"
+	"math/rand"
+)
 
 type Number interface {
 	~int | ~int8 | ~int16 | ~int32 | ~int64 | ~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~uintptr | ~float32 | ~float64
@@ -103,4 +106,41 @@ func SubArray[T any](data []T, index int, length ...int) []T {
 	result := make([]T, l)
 	copy(result, data[index:index+l])
 	return result
+}
+
+func GetRandomValues[T any](arr []T, n int, repetitions bool) []T {
+	result := make([]T, 0, n)
+
+	if repetitions {
+		for i := 0; i < n; i++ {
+			result = append(result, arr[rand.Intn(len(arr))])
+		}
+	} else {
+		if n > len(arr) {
+			n = len(arr)
+		}
+		indices := rand.Perm(len(arr))
+		for i := 0; i < n; i++ {
+			result = append(result, arr[indices[i]])
+		}
+	}
+	return result
+}
+
+func GetElementsByIndexes[T any](arr []T, ixs []int) []T {
+	result := make([]T, 0, len(ixs))
+	for _, ix := range ixs {
+		if ix >= 0 && ix < len(arr) {
+			result = append(result, arr[ix])
+		}
+	}
+	return result
+}
+
+func GetRandomBytes(n int) []byte {
+	b := make([]byte, n)
+	for i := range b {
+		b[i] = byte(rand.Intn(256))
+	}
+	return b
 }
