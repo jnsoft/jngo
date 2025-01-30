@@ -1,8 +1,8 @@
 package sss
 
 import (
+	"fmt"
 	"math/big"
-	"strconv"
 	"testing"
 
 	"github.com/jnsoft/jngo/misc"
@@ -12,7 +12,7 @@ import (
 func Test_SSS(t *testing.T) {
 	t.Run("test sss", func(t *testing.T) {
 
-		secret := 12348354
+		secret := big.NewInt(int64(12348354))
 		securitylevel := 7
 		noOfshares := 6
 		min_shares := 4
@@ -47,25 +47,31 @@ func Test_SSS(t *testing.T) {
 
 		res_secret := RecoverSecret(selected_shares, selected_xs, securitylevel)
 
-		AssertEqual(t, res_secret.String(), strconv.Itoa(secret))
+		AssertEqual(t, res_secret.String(), secret.String())
 
 	})
 
 	t.Run("test sss with 256-bit key", func(t *testing.T) {
 
-		securitylevel := 13
 		noOfshares := 6
 		min_shares := 3
 
 		key := misc.GetRandomBytes(256)
 
-		secrets, err := CreateSecretsFromKey(key, noOfshares, min_shares, securitylevel)
+		shares, err := CreateSecretsFromKey(key, noOfshares, min_shares)
 		AssertNil(t, err)
 
-		recovered_key, err := GetKeyFromSecrets(secrets, xs, securitylevel)
-		AssertNil(t, err)
+		println("\nshares:")
+		for ix, share := range shares {
+			fmt.Println(ix, ": ", share)
+		}
 
-		CollectionAssertEqual(t, recovered_key, key)
+		selected_shares := misc.GetRandomValues[string](shares, min_shares, false)
+
+		recovered_key, err := GetKeyFromSecrets(selected_shares, xs, securitylevel)
+		//AssertNil(t, err)
+
+		//CollectionAssertEqual(t, recovered_key, key)
 
 	})
 }

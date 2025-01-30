@@ -1,6 +1,7 @@
 package misc
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -56,6 +57,18 @@ func TestMap(t *testing.T) {
 			return x * x
 		})
 		CollectionAssertEqual(t, sqs, []int{1, 4, 9, 16})
+	})
+}
+
+func TestZip(t *testing.T) {
+	t.Run("string zip", func(t *testing.T) {
+		arr1 := []int{1, 2, 3}
+		arr2 := []string{"a", "b", "c"}
+		result := Zip(arr1, arr2, func(a int, b string) string {
+			return fmt.Sprintf("%d%s", a, b)
+		})
+		AssertEqual(t, len(result), 3)
+		CollectionAssertEqual(t, result, []string{"1a", "2b", "3c"})
 	})
 }
 

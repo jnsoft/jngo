@@ -1,10 +1,14 @@
 package sss
 
 import (
+	"encoding/base64"
 	"errors"
 	"math/big"
 	"math/rand"
+	"strconv"
 	"time"
+
+	"github.com/jnsoft/jngo/misc"
 )
 
 // Shamir's Secret Sharing
@@ -21,33 +25,44 @@ func GetPrime(securityLevel int) *big.Int {
 	return new(big.Int).Sub(new(big.Int).Exp(big.NewInt(2), big.NewInt(int64(SecurityLevels[securityLevel])), nil), big.NewInt(1))
 }
 
-func CreateSecretsFromKey(key []byte, noOfShares, minShares int, secLevel int) ([]string, error){
+func CreateSecretsFromKey(key []byte, no_of_shares, threshold int) ([]string, error) {
 	secret := bytesToBigInt(key)
-	shares, err := CreateShares(secret, noOfShares, minShares, secLevel)
+	println("secret: " + secret.String())
+	shares, err := CreateShares(secret, no_of_shares, threshold, GetSecurityLevel(len(key)))
+	if err != nil {
+		return nil, errors.New("CreateSecretsFromKey->CreateShares failed")
+	}
 
-	// return shares, converted to []byte -> base64
+	b64_shares := BigIntsToBase64Strings(shares)
+	x := 0
+	b64_shares_with_x := misc.Map(b64_shares, func(s string) string {
+		x++
+		return strconv.Itoa(x) + "|" + s
+	})
+	return b64_shares_with_x, nil
 }
 
-func GetKeyFromSecrets(secrets []string, xs []int, secLevel int) ([]byte, error){
+
+func GetKeyFromSecrets(secrets []string, secLevel int) ([]byte, error){
 	ys := secrets -> []byte (from base64) -> []*big.int
 	secret, err := RecoverSecret(ys, xs, secLevel)
 	return bigIntToBytes(secret)
 }
 
-func CreateShares(secret, shares, minShares, securityLevel int) ([]*big.Int, error) {
-	if secret < 0 {
+func CreateShares(secret *big.Int, shares, threshold, securityLevel int) ([]*big.Int, error) {
+	if secret.Cmp(big.NewInt(0)) <= 0 {
 		return nil, errors.New("secret must be greater than 0")
 	}
 
-	if shares < minShares {
-		return nil, errors.New("number of shares must not be less than minShares")
+	if shares < threshold {
+		return nil, errors.New("number of shares must not be less than threshold")
 	}
 
 	prime := GetPrime(securityLevel)
 
 	// Create the polynomial
-	polynomial := []*big.Int{big.NewInt(int64(secret))}
-	for i := 0; i < minShares-1; i++ {
+	polynomial := []*big.Int{secret}
+	for i := 0; i < threshold-1; i++ {
 		randomCoeff := new(big.Int).Rand(rand.New(rand.NewSource(time.Now().UnixNano())), new(big.Int).Sub(prime, big.NewInt(1)))
 		polynomial = append(polynomial, randomCoeff)
 	}
@@ -76,7 +91,7 @@ func RecoverSecret(shares, xs []*big.Int, securityLevel int) *big.Int {
 
 // LagrangeInterpolate performs Lagrange interpolation
 // Find the y-value for the given x, given n (x, y) points;
-// k points will define a polynomial of up to kth order.
+// k points will define a polynomial of up to k-1 th order.
 // xs must be distinct points
 
 func lagrangeInterpolate(x *big.Int, xs, ys []*big.Int, p *big.Int) *big.Int {
@@ -123,4 +138,43 @@ func bytesToBigInt(b []byte) *big.Int {
 
 func bigIntToBytes(bi *big.Int) []byte {
 	return bi.Bytes()
+}
+
+func BigIntsToBytesArray(bigInts []*big.Int) [][]byte {
+	bytesArray := make([][]byte, len(bigInts))
+	for i, bigInt := range bigInts {
+		bytesArray[i] = bigInt.Bytes()
+	}
+	return bytesArray
+}
+
+func BytesArrayToBigInts(bytesArray [][]byte) []*big.Int {
+	bigInts := make([]*big.Int, len(bytesArray))
+	for i, bytes := range bytesArray {
+		bigInt := new(big.Int).SetBytes(bytes)
+		bigInts[i] = bigInt
+	}
+	return bigInts
+}
+
+func BigIntsToBase64Strings(bigInts []*big.Int) []string {
+	base64Strings := make([]string, len(bigInts))
+	for i, bigInt := range bigInts {
+		bytes := bigInt.Bytes()
+		base64Strings[i] = base64.StdEncoding.EncodeToString(bytes)
+	}
+	return base64Strings
+}
+
+func Base64StringsToBigInts(base64Strings []string) ([]*big.Int, error) {
+	bigInts := make([]*big.Int, len(base64Strings))
+	for i, str := range base64Strings {
+		bytes, err := base64.StdEncoding.DecodeString(str)
+		if err != nil {
+			return nil, err
+		}
+		bigInt := new(big.Int).SetBytes(bytes)
+		bigInts[i] = bigInt
+	}
+	return bigInts, nil
 }

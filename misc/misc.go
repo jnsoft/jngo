@@ -67,6 +67,18 @@ func Map[T any, M any](arr []T, f func(T) M) []M {
 	return res
 }
 
+func Zip[T1 any, T2 any, R any](arr1 []T1, arr2 []T2, f func(T1, T2) R) []R {
+	length := len(arr1)
+	if len(arr2) < length {
+		length = len(arr2)
+	}
+	res := make([]R, length)
+	for i := 0; i < length; i++ {
+		res[i] = f(arr1[i], arr2[i])
+	}
+	return res
+}
+
 func Filter[A any](arr []A, f func(A) bool) []A {
 	filtered := make([]A, 0)
 	for _, v := range arr {
