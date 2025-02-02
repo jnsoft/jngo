@@ -3,6 +3,7 @@ package misc
 import (
 	"math"
 	"math/rand"
+	"strings"
 )
 
 type Number interface {
@@ -155,4 +156,13 @@ func GetRandomBytes(n int) []byte {
 		b[i] = byte(rand.Intn(256))
 	}
 	return b
+}
+
+func SplitStrings(input []string, delimiter string) [][]string {
+	var result [][]string
+	for _, str := range input {
+		splitStr := strings.Split(str, delimiter)
+		result = append(result, splitStr)
+	}
+	return result
 }

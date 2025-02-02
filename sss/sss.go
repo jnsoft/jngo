@@ -11,15 +11,20 @@ import (
 	"github.com/jnsoft/jngo/misc"
 )
 
+const (
+	DELIMETER = "|"
+)
+
 // Shamir's Secret Sharing
 type SecretSharing struct{}
 
 // Mersenne primes exponents, e.g. 2^127-1 for desired security level of 128.
 // Too large and all the ciphertext is large, too small and security is compromised
-var SecurityLevels = []int{5, 7, 13, 17, 19, 31, 61, 89, 107, 127, 521,
-	607, 1279, 2203, 2281, 3217, 4253, 4423, 9689, 9941, 11213, 19937, 21701, 23209, 44497, 86243,
-	110503, 132049, 216091, 756839, 859433, 1257787, 1398269, 2976221, 3021377, 6972593, 13466917,
-	20996011, 24036583, 25964951, 30402457, 32582657, 37156667, 42643801, 43112609}
+var SecurityLevels = []int{5, 7, 13, 17, 19, 31, 61, 89, 107, 127,
+	521, 607, 1279, 2203, 2281, 3217, 4253, 4423, 9689, 9941,
+	11213, 19937, 21701, 23209, 44497, 86243, 110503, 132049, 216091, 756839,
+	859433, 1257787, 1398269, 2976221, 3021377, 6972593, 13466917, 20996011, 24036583, 25964951,
+	30402457, 32582657, 37156667, 42643801, 43112609}
 
 func GetPrime(securityLevel int) *big.Int {
 	return new(big.Int).Sub(new(big.Int).Exp(big.NewInt(2), big.NewInt(int64(SecurityLevels[securityLevel])), nil), big.NewInt(1))
@@ -27,7 +32,6 @@ func GetPrime(securityLevel int) *big.Int {
 
 func CreateSecretsFromKey(key []byte, no_of_shares, threshold int) ([]string, error) {
 	secret := bytesToBigInt(key)
-	println("secret: " + secret.String())
 	shares, err := CreateShares(secret, no_of_shares, threshold, GetSecurityLevel(len(key)))
 	if err != nil {
 		return nil, errors.New("CreateSecretsFromKey->CreateShares failed")
@@ -37,16 +41,28 @@ func CreateSecretsFromKey(key []byte, no_of_shares, threshold int) ([]string, er
 	x := 0
 	b64_shares_with_x := misc.Map(b64_shares, func(s string) string {
 		x++
-		return strconv.Itoa(x) + "|" + s
+		return strconv.Itoa(x) + DELIMETER + s
 	})
 	return b64_shares_with_x, nil
 }
 
-
-func GetKeyFromSecrets(secrets []string, secLevel int) ([]byte, error){
-	ys := secrets -> []byte (from base64) -> []*big.int
-	secret, err := RecoverSecret(ys, xs, secLevel)
-	return bigIntToBytes(secret)
+func GetKeyFromSecrets(secrets []string, secLevel int) ([]byte, error) {
+	secret_strings := misc.SplitStrings(secrets, DELIMETER)
+	xs := misc.Map(secret_strings, func(slice []string) *big.Int {
+		bigInt := new(big.Int)
+		bigInt.SetString(slice[0], 10)
+		return bigInt
+	})
+	y_strings := misc.Map(secret_strings, func(slice []string) string {
+		return slice[1]
+	})
+	ys, err := Base64StringsToBigInts(y_strings)
+	if err != nil {
+		return nil, errors.New("GetKeyFromSecrets->Base64StringsToBigInts failed")
+	}
+	secret := RecoverSecret(ys, xs, secLevel)
+	key := bigIntToBytes(secret)
+	return key, err
 }
 
 func CreateShares(secret *big.Int, shares, threshold, securityLevel int) ([]*big.Int, error) {
@@ -177,4 +193,11 @@ func Base64StringsToBigInts(base64Strings []string) ([]*big.Int, error) {
 		bigInts[i] = bigInt
 	}
 	return bigInts, nil
+}
+
+func getFirstElement(slice []string) string {
+	if len(slice) > 0 {
+		return slice[0]
+	}
+	return ""
 }

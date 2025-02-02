@@ -1,7 +1,6 @@
 package sss
 
 import (
-	"fmt"
 	"math/big"
 	"testing"
 
@@ -61,17 +60,12 @@ func Test_SSS(t *testing.T) {
 		shares, err := CreateSecretsFromKey(key, noOfshares, min_shares)
 		AssertNil(t, err)
 
-		println("\nshares:")
-		for ix, share := range shares {
-			fmt.Println(ix, ": ", share)
-		}
-
 		selected_shares := misc.GetRandomValues[string](shares, min_shares, false)
 
-		recovered_key, err := GetKeyFromSecrets(selected_shares, xs, securitylevel)
-		//AssertNil(t, err)
+		recovered_key, err := GetKeyFromSecrets(selected_shares, GetSecurityLevel(len(key)))
+		AssertNil(t, err)
 
-		//CollectionAssertEqual(t, recovered_key, key)
+		CollectionAssertEqual(t, recovered_key, key)
 
 	})
 }
