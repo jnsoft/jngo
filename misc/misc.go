@@ -1,6 +1,10 @@
 package misc
 
-import "math"
+import (
+	"math"
+	"math/rand"
+	"strings"
+)
 
 type Number interface {
 	~int | ~int8 | ~int16 | ~int32 | ~int64 | ~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~uintptr | ~float32 | ~float64
@@ -64,6 +68,18 @@ func Map[T any, M any](arr []T, f func(T) M) []M {
 	return res
 }
 
+func Zip[T1 any, T2 any, R any](arr1 []T1, arr2 []T2, f func(T1, T2) R) []R {
+	length := len(arr1)
+	if len(arr2) < length {
+		length = len(arr2)
+	}
+	res := make([]R, length)
+	for i := 0; i < length; i++ {
+		res[i] = f(arr1[i], arr2[i])
+	}
+	return res
+}
+
 func Filter[A any](arr []A, f func(A) bool) []A {
 	filtered := make([]A, 0)
 	for _, v := range arr {
@@ -102,5 +118,51 @@ func SubArray[T any](data []T, index int, length ...int) []T {
 	}
 	result := make([]T, l)
 	copy(result, data[index:index+l])
+	return result
+}
+
+func GetRandomValues[T any](arr []T, n int, repetitions bool) []T {
+	result := make([]T, 0, n)
+
+	if repetitions {
+		for i := 0; i < n; i++ {
+			result = append(result, arr[rand.Intn(len(arr))])
+		}
+	} else {
+		if n > len(arr) {
+			n = len(arr)
+		}
+		indices := rand.Perm(len(arr))
+		for i := 0; i < n; i++ {
+			result = append(result, arr[indices[i]])
+		}
+	}
+	return result
+}
+
+func GetElementsByIndexes[T any](arr []T, ixs []int) []T {
+	result := make([]T, 0, len(ixs))
+	for _, ix := range ixs {
+		if ix >= 0 && ix < len(arr) {
+			result = append(result, arr[ix])
+		}
+	}
+	return result
+}
+
+func GetRandomBytes(n int) []byte {
+	b := make([]byte, n)
+	for i := range b {
+		b[i] = byte(rand.Intn(256))
+	}
+	return b
+}
+
+func SplitStrings(input []string, delimiter string) [][]string {
+	var result [][]string
+	for _, str := range input {
+		splitStr := strings.Split(str, delimiter)
+		result = append(result, splitStr)
+	}
 	return result
 }
