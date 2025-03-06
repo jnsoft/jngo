@@ -166,3 +166,13 @@ func SplitStrings(input []string, delimiter string) [][]string {
 	}
 	return result
 }
+
+func IsPalindrome(s string) bool {
+	normalized := strings.ToLower(strings.ReplaceAll(s, " ", ""))
+	for i := 0; i < len(normalized)/2; i++ {
+		if normalized[i] != normalized[len(normalized)-1-i] {
+			return false
+		}
+	}
+	return true
+}
