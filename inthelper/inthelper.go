@@ -208,8 +208,11 @@ func GetFactor(n int) (int, int) {
 	if MillerRabin(big.NewInt(int64(n)), 13) {
 		return n, 1
 	}
+	if n % 2 == 0 {
+		return 2, n / 2
+	}
 	max := int(math.Sqrt(float64(n)))
-	for i := 2; i <= max; i++ {
+	for i := 3; i <= max; i+=2 {
 		if n%i == 0 {
 			return i, n / i
 		}
