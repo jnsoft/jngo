@@ -203,3 +203,32 @@ func MillerRabin(n *big.Int, k int) bool {
 }
 
 // FACTORS AND DIVISORS
+
+func GetFactor(n int) (int, int, error) {
+	if MillerRabin(big.NewInt(int64(n)), 13) {
+		return n, 1, nil
+	}
+	max := int(math.Sqrt(float64(n)))
+	for i := 2; i <= max; i++ {
+		if n%i == 0 {
+			return i, n / i, nil
+		}
+	}
+	return -1, -1, errors.New("no factor found")
+}
+
+func Factor(n int) ([]int, error) {
+	factors := []int{}
+	var err error
+	var factor int
+
+	for n > 1 {
+		factor, n, err = GetFactor(n)
+		if err != nil {
+			return nil, err
+		}
+		factors = append(factors, factor)
+	}
+
+	return factors, nil
+}
