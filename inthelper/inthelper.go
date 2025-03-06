@@ -211,7 +211,7 @@ func GetFactor(n int) (int, int) {
 	max := int(math.Sqrt(float64(n)))
 	for i := 2; i <= max; i++ {
 		if n%i == 0 {
-			return i, n / i, nil
+			return i, n / i
 		}
 	}
 	return n,-1
