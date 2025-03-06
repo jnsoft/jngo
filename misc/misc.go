@@ -158,6 +158,15 @@ func GetRandomBytes(n int) []byte {
 	return b
 }
 
+func RangeSlice(a, b int) []int {
+    size := b - a + 1
+    slice := make([]int, size)
+    for i := range slice {
+        slice[i] = a + i
+    }
+    return slice
+}
+
 func SplitStrings(input []string, delimiter string) [][]string {
 	var result [][]string
 	for _, str := range input {
