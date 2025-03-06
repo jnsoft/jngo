@@ -222,10 +222,7 @@ func Factor(n int) []int {
 	var factor int
 
 	for n > 1 {
-		factor, n, err = GetFactor(n)
-		if err != nil {
-			return nil, err
-		}
+		factor, n = GetFactor(n)
 		factors = append(factors, factor)
 	}
 	return factors
