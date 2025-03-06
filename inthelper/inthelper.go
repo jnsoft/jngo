@@ -204,9 +204,9 @@ func MillerRabin(n *big.Int, k int) bool {
 
 // FACTORS AND DIVISORS
 
-func GetFactor(n int) (int, int, error) {
+func GetFactor(n int) (int, int) {
 	if MillerRabin(big.NewInt(int64(n)), 13) {
-		return n, 1, nil
+		return n, 1
 	}
 	max := int(math.Sqrt(float64(n)))
 	for i := 2; i <= max; i++ {
@@ -214,12 +214,11 @@ func GetFactor(n int) (int, int, error) {
 			return i, n / i, nil
 		}
 	}
-	return -1, -1, errors.New("no factor found")
+	return n,-1
 }
 
-func Factor(n int) ([]int, error) {
+func Factor(n int) []int {
 	factors := []int{}
-	var err error
 	var factor int
 
 	for n > 1 {
@@ -229,6 +228,5 @@ func Factor(n int) ([]int, error) {
 		}
 		factors = append(factors, factor)
 	}
-
-	return factors, nil
+	return factors
 }
