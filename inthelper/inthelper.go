@@ -42,6 +42,15 @@ func Concat_big(a big.Int, b big.Int) *big.Int {
 	return big.NewInt(0).Add(&a, &b)
 }
 
+func Reverse(n int) int {
+	rev := 0
+	for n > 0 {
+		rev = 10*rev + n%10
+		n = n / 10
+	}
+	return rev
+}
+
 // Greatest Common Divisor (a.k.a. gcd, gcf, hcf, gcm, sgd (in swedish))
 func GCD(a, b int) int {
 	for b != 0 {
@@ -211,11 +220,17 @@ func GetFactor(n int) (int, int) {
 	if n % 2 == 0 {
 		return 2, n / 2
 	}
-	max := int(math.Sqrt(float64(n)))
-	for i := 3; i <= max; i+=2 {
+	if n % 3 == 0 {
+		return 2, n / 3
+	}
+	limit := int(math.Sqrt(float64(n)))
+	for i := 5; i <= limit; i+=6 {
 		if n%i == 0 {
 			return i, n / i
-		}
+		} else if n % (i + 2) == 0 {
+                        return i+2, n / (i+2)
+			}
+			
 	}
 	return n,-1
 }

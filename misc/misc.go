@@ -121,6 +121,17 @@ func SubArray[T any](data []T, index int, length ...int) []T {
 	return result
 }
 
+func HasDuplicates[T comparable](arr []T) bool {
+	seen := make(map[T]struct{})
+	for _, v := range arr {
+		if _, exists := seen[v]; exists {
+			return true // dup found
+		}
+		seen[v] = struct{}{}
+	}
+	return false
+}
+
 func GetRandomValues[T any](arr []T, n int, repetitions bool) []T {
 	result := make([]T, 0, n)
 
@@ -158,6 +169,15 @@ func GetRandomBytes(n int) []byte {
 	return b
 }
 
+func RangeSlice(a, b int) []int {
+    size := b - a + 1
+    slice := make([]int, size)
+    for i := range slice {
+        slice[i] = a + i
+    }
+    return slice
+}
+
 func SplitStrings(input []string, delimiter string) [][]string {
 	var result [][]string
 	for _, str := range input {
@@ -165,4 +185,14 @@ func SplitStrings(input []string, delimiter string) [][]string {
 		result = append(result, splitStr)
 	}
 	return result
+}
+
+func IsPalindrome(s string) bool {
+	normalized := strings.ToLower(strings.ReplaceAll(s, " ", ""))
+	for i := 0; i < len(normalized)/2; i++ {
+		if normalized[i] != normalized[len(normalized)-1-i] {
+			return false
+		}
+	}
+	return true
 }
