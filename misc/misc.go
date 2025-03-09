@@ -121,6 +121,17 @@ func SubArray[T any](data []T, index int, length ...int) []T {
 	return result
 }
 
+func HasDuplicates[T comparable](arr []T) bool {
+	seen := make(map[T]struct{})
+	for _, v := range arr {
+		if _, exists := seen[v]; exists {
+			return true // dup found
+		}
+		seen[v] = struct{}{}
+	}
+	return false
+}
+
 func GetRandomValues[T any](arr []T, n int, repetitions bool) []T {
 	result := make([]T, 0, n)
 
