@@ -125,7 +125,7 @@ func GetUniquePermutations(n int) []int {
 
     // Use a map to prevent duplicates
     permutationsSet := make(map[string]struct{})
-    permute(digits, 0, permutationsSet)
+    permute_unique(digits, 0, permutationsSet)
 
     // Convert the map keys to integers
     result := []int{}
@@ -147,7 +147,7 @@ func permute_unique(digits []rune, start int, permutationsSet map[string]struct{
         digits[start], digits[i] = digits[i], digits[start]
 
         // Recursively generate permutations for the remaining digits
-        permute(digits, start+1, permutationsSet)
+        permute_unique(digits, start+1, permutationsSet)
 
         // Swap back to restore the original state
         digits[start], digits[i] = digits[i], digits[start]
