@@ -5,8 +5,6 @@ import (
 	"math/rand"
 	"strings"
 	"reflect"
-	"bytes"
-    	"fmt"
 )
 
 type Number interface {
