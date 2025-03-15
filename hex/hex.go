@@ -60,3 +60,20 @@ func hexCharToByte(c byte) (byte, error) {
 		return 0, errors.New("invalid hexadecimal character")
 	}
 }
+
+// Set bit at position from end in n, 0 = last bit
+func SetBit(position int, n int) int {
+	return n | (1 << position)
+}
+
+// Check if the last length bits of n is set to 1:s
+func CheckAllBits(length int, n int) bool {
+	mask := (1 << length) - 1
+	return (n & mask) == mask
+}
+
+// Check if any of the last length bits of n is set to 1:s
+func CheckAnyBits(length int, n int) bool {
+	mask := (1 << length) - 1
+	return (n & mask) != 0
+}
