@@ -47,8 +47,8 @@ func Sequence[T Number](min, max, step T) []T {
 	return seq
 }
 
-func Contains(slice []any, target any) bool {
-    for _, value := range slice {
+func Contains[T any](arr []T, target T) bool {
+    for _, value := range arr {
         if value == target {
             return true
         }
