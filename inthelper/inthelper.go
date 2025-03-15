@@ -72,12 +72,16 @@ func LCM(a, b int, integers ...int) int {
 	return result
 }
 
-func IsPerfectPower(n int, power int) bool {
-	if n < 0 && power%2 == 0 {
-		return false // Negative numbers cannot have real even roots
-	}
-	root := int(math.Round(math.Pow(float64(n), 1.0/float64(power))))
-	return int(math.Pow(float64(root), float64(power))) == n
+func IsPerfectPower(n int, power int) (bool, int) {
+    if n < 0 && power%2 == 0 {
+        return false, 0 // Negative numbers cannot have real even roots
+    }
+    root := int(math.Round(math.Pow(float64(n), 1.0/float64(power))))
+    // Verify that root^power equals n
+    if int(math.Pow(float64(root), float64(power))) == n {
+        return true, root
+    }
+    return false, 0
 }
 
 // PRIMES
