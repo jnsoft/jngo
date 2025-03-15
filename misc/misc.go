@@ -47,6 +47,15 @@ func Sequence[T Number](min, max, step T) []T {
 	return seq
 }
 
+func Contains(slice []any, target any) bool {
+    for _, value := range slice {
+        if value == target {
+            return true
+        }
+    }
+    return false
+}
+
 func FilterByArray[A any, B bool](arr []A, filter []B) []A {
 	if len(arr) != len(filter) {
 		panic("array lengths must be equal")
