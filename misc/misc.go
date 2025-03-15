@@ -4,6 +4,7 @@ import (
 	"math"
 	"math/rand"
 	"strings"
+	"reflect"
 )
 
 type Number interface {
@@ -49,7 +50,7 @@ func Sequence[T Number](min, max, step T) []T {
 
 func Contains[T any](arr []T, target T) bool {
     for _, value := range arr {
-        if value == target {
+        if reflect.DeepEqual(value, target) {
             return true
         }
     }
