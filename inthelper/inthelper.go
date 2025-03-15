@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"math"
 	"math/big"
+	"strconv"
 
 	misc "github.com/jnsoft/jngo/misc"
 )
