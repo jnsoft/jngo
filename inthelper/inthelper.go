@@ -117,6 +117,42 @@ func permute(digits []rune, start int, permutations *[]string) {
     }
 }
 
+// get all permutations of a number, ignore repeated digits in input number
+func GetUniquePermutations(n int) []int {
+    str := strconv.Itoa(n)
+    digits := []rune(str)
+
+    // Use a map to prevent duplicates
+    permutationsSet := make(map[string]struct{})
+    permute(digits, 0, permutationsSet)
+
+    // Convert the map keys to integers
+    result := []int{}
+    for perm := range permutationsSet {
+        num, _ := strconv.Atoi(perm)
+        result = append(result, num)
+    }
+    return result
+}
+
+func permute_unique(digits []rune, start int, permutationsSet map[string]struct{}) {
+    if start == len(digits)-1 {
+        permutationsSet[string(digits)] = struct{}{} // Add to map to avoid duplicates
+        return
+    }
+
+    for i := start; i < len(digits); i++ {
+        // Swap current element with the starting element
+        digits[start], digits[i] = digits[i], digits[start]
+
+        // Recursively generate permutations for the remaining digits
+        permute(digits, start+1, permutationsSet)
+
+        // Swap back to restore the original state
+        digits[start], digits[i] = digits[i], digits[start]
+    }
+}
+
 // PRIMES
 
 func PrimesSieve(exclusive_limit int) []int {
