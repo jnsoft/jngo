@@ -234,6 +234,7 @@ func generatePermutations(arr []any, start int, result *[][]any) {
         // Swap back to restore the original state
         arr[start], arr[i] = arr[i], arr[start]
     }
+}
 
 
 // The Hamming Distance measures the minimum number of substitutions required to change one string into the other
