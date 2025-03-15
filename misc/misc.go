@@ -5,6 +5,8 @@ import (
 	"math/rand"
 	"strings"
 	"reflect"
+	"bytes"
+    	"fmt"
 )
 
 type Number interface {
@@ -232,4 +234,57 @@ func generatePermutations(arr []any, start int, result *[][]any) {
         // Swap back to restore the original state
         arr[start], arr[i] = arr[i], arr[start]
     }
+
+
+// The Hamming Distance measures the minimum number of substitutions required to change one string into the other
+func HammingDistance(s1, s2 string) (int) {
+	if len(s1) != len(s2) {
+		return -1
+	}
+
+	distance := 0
+	for i := range s1 {
+		if s1[i] != s2[i] {
+			distance++
+		}
+	}
+	return distance
+}
+
+// Edit distance/Hamming distance between two strings.The Hamming distance is here defined as the number of differing bits
+func HammingDistance(var1, var2 []byte) int {
+    arr1 := bytesToBits(var1)
+    arr2 := bytesToBits(var2)
+
+    diff := 0
+
+    if len(arr1) >= len(arr2) {
+        for i := 0; i < len(arr2); i++ {
+            if arr1[i] != arr2[i] {
+                diff++
+            }
+        }
+        // Account for extra bits in the longer slice
+        diff += len(arr1) - len(arr2)
+    } else {
+        for i := 0; i < len(arr1); i++ {
+            if arr1[i] != arr2[i] {
+                diff++
+            }
+        }
+        // Account for extra bits in the longer slice
+        diff += len(arr2) - len(arr1)
+    }
+
+    return diff
+}
+
+func bytesToBits(data []byte) []bool {
+    bits := []bool{}
+    for _, b := range data {
+        for i := 7; i >= 0; i-- { 
+            bits = append(bits, (b&(1<<i)) != 0)
+        }
+    }
+    return bits
 }
