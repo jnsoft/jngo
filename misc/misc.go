@@ -47,6 +47,15 @@ func Sequence[T Number](min, max, step T) []T {
 	return seq
 }
 
+func Contains(slice []any, target any) bool {
+    for _, value := range slice {
+        if value == target {
+            return true
+        }
+    }
+    return false
+}
+
 func FilterByArray[A any, B bool](arr []A, filter []B) []A {
 	if len(arr) != len(filter) {
 		panic("array lengths must be equal")
@@ -195,4 +204,31 @@ func IsPalindrome(s string) bool {
 		}
 	}
 	return true
+}
+
+func Permutations(arr []any) [][]any {
+    var result [][]any
+    generatePermutations(arr, 0, &result)
+    return result
+}
+
+func generatePermutations(arr []any, start int, result *[][]any) {
+    if start == len(arr)-1 {
+        // Append a copy of the current permutation to the result
+        temp := make([]any, len(arr))
+        copy(temp, arr)
+        *result = append(*result, temp)
+        return
+    }
+
+    for i := start; i < len(arr); i++ {
+        // Swap current element with the starting element
+        arr[start], arr[i] = arr[i], arr[start]
+
+        // Recursively generate permutations for the remaining elements
+        generatePermutations(arr, start+1, result)
+
+        // Swap back to restore the original state
+        arr[start], arr[i] = arr[i], arr[start]
+    }
 }

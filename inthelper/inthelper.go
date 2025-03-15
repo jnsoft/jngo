@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"math"
 	"math/big"
+	"strconv"
 
 	misc "github.com/jnsoft/jngo/misc"
 )
@@ -70,6 +71,87 @@ func LCM(a, b int, integers ...int) int {
 	}
 
 	return result
+}
+
+func IsPerfectPower(n int, power int) (bool, int) {
+    if n < 0 && power%2 == 0 {
+        return false, 0 // Negative numbers cannot have real even roots
+    }
+    root := int(math.Round(math.Pow(float64(n), 1.0/float64(power))))
+    // Verify that root^power equals n
+    if int(math.Pow(float64(root), float64(power))) == n {
+        return true, root
+    }
+    return false, 0
+}
+
+func Permutations(n int) []int {
+    str := strconv.Itoa(n)
+    digits := []rune(str)
+
+    permutations := []string{}
+    permute(digits, 0, &permutations)
+
+    result := []int{}
+    for _, perm := range permutations {
+        num, _ := strconv.Atoi(perm)
+        result = append(result, num)
+    }
+    return result
+}
+
+func permute(digits []rune, start int, permutations *[]string) {
+    if start == len(digits)-1 {
+        *permutations = append(*permutations, string(digits))
+        return
+    }
+
+    for i := start; i < len(digits); i++ {
+        // Swap current element with the starting element
+        digits[start], digits[i] = digits[i], digits[start]
+
+        // Recursively generate permutations for the remaining digits
+        permute(digits, start+1, permutations)
+
+        // Swap back to restore the original state
+        digits[start], digits[i] = digits[i], digits[start]
+    }
+}
+
+// get all permutations of a number, ignore repeated digits in input number
+func GetUniquePermutations(n int) []int {
+    str := strconv.Itoa(n)
+    digits := []rune(str)
+
+    // Use a map to prevent duplicates
+    permutationsSet := make(map[string]struct{})
+    permute_unique(digits, 0, permutationsSet)
+
+    // Convert the map keys to integers
+    result := []int{}
+    for perm := range permutationsSet {
+        num, _ := strconv.Atoi(perm)
+        result = append(result, num)
+    }
+    return result
+}
+
+func permute_unique(digits []rune, start int, permutationsSet map[string]struct{}) {
+    if start == len(digits)-1 {
+        permutationsSet[string(digits)] = struct{}{} // Add to map to avoid duplicates
+        return
+    }
+
+    for i := start; i < len(digits); i++ {
+        // Swap current element with the starting element
+        digits[start], digits[i] = digits[i], digits[start]
+
+        // Recursively generate permutations for the remaining digits
+        permute_unique(digits, start+1, permutationsSet)
+
+        // Swap back to restore the original state
+        digits[start], digits[i] = digits[i], digits[start]
+    }
 }
 
 // PRIMES
