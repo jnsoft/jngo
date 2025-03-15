@@ -1,5 +1,4 @@
-# Use the official Go image as a parent image
-FROM golang:latest
+FROM FROM docker.io/golang:latest
 
 # Install necessary tools
 RUN apt-get update && apt-get install -y \
