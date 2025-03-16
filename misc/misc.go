@@ -40,7 +40,7 @@ func Min[T Ordered](a, b T) T {
 	return b
 }
 
-// Functional helpers
+// Functional helpers /////////////////////////////
 
 func Map[T any, M any](arr []T, f func(T) M) []M {
 	res := make([]M, len(arr))
@@ -94,7 +94,7 @@ func Find[A any](items []A, predicate func(A) bool) (value A, found bool) {
 	return
 }
 
-// Array helpers
+// Array helpers /////////////////////////////
 
 func Sequence[T Number](min, max, step T) []T {
 	if step != 0 && (max-min)*step < 0 {
