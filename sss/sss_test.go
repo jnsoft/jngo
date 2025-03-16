@@ -24,7 +24,7 @@ func Test_SSS(t *testing.T) {
 		AssertNil(t, err)
 
 		xs := BigIntegerRange(1, noOfshares+1)
-		selected_xs := misc.GetRandomValues[*big.Int](xs, min_shares, false)
+		selected_xs := misc.GetRandomElements[*big.Int](xs, min_shares, false)
 		selected_shares := make([]*big.Int, min_shares)
 		for i, idx := range selected_xs {
 			index := int(idx.Int64()) - 1
@@ -61,7 +61,7 @@ func Test_SSS(t *testing.T) {
 		shares, err := CreateSecretsFromKey(key, noOfshares, min_shares)
 		AssertNil(t, err)
 
-		selected_shares := misc.GetRandomValues[string](shares, min_shares, false)
+		selected_shares := misc.GetRandomElements[string](shares, min_shares, false)
 
 		recovered_key, err := GetKeyFromSecrets(selected_shares, GetSecurityLevel(len(key)))
 		AssertNil(t, err)
