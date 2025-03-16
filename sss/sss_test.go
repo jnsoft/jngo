@@ -30,19 +30,20 @@ func Test_SSS(t *testing.T) {
 			index := int(idx.Int64()) - 1
 			selected_shares[i] = shares[index]
 		}
-
-		println("\nshares:")
-		for _, share := range shares {
-			println(share.String())
-		}
-		println("\n xs:")
-		for _, t := range selected_xs {
-			println(t.String())
-		}
-		println("\n selected shares:")
-		for _, t := range selected_shares {
-			println(t.String())
-		}
+		/*
+			println("\nshares:")
+			for _, share := range shares {
+				println(share.String())
+			}
+			println("\n xs:")
+			for _, t := range selected_xs {
+				println(t.String())
+			}
+			println("\n selected shares:")
+			for _, t := range selected_shares {
+				println(t.String())
+			}
+		*/
 
 		res_secret := RecoverSecret(selected_shares, selected_xs, securitylevel)
 

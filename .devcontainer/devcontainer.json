@@ -18,5 +18,7 @@
     },
     "forwardPorts": [],
     "postCreateCommand": "go mod tidy",
-    "remoteUser": "vscode"
+    "remoteUser": "root",
+    "runArgs": ["--privileged"] 
+
 }
