@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/jnsoft/jngo/misc"
+	"github.com/jnsoft/jngo/stringhelper"
 )
 
 const (
@@ -47,7 +48,7 @@ func CreateSecretsFromKey(key []byte, no_of_shares, threshold int) ([]string, er
 }
 
 func GetKeyFromSecrets(secrets []string, secLevel int) ([]byte, error) {
-	secret_strings := misc.SplitStrings(secrets, DELIMETER)
+	secret_strings := stringhelper.SplitStrings(secrets, DELIMETER)
 	xs := misc.Map(secret_strings, func(slice []string) *big.Int {
 		bigInt := new(big.Int)
 		bigInt.SetString(slice[0], 10)

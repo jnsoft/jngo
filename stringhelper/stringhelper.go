@@ -1,11 +1,47 @@
 package stringhelper
 
+import "strings"
+
 func Reverse(s string) string {
 	runes := []rune(s)
 	for i, j := 0, len(runes)-1; i < j; i, j = i+1, j-1 {
 		runes[i], runes[j] = runes[j], runes[i]
 	}
 	return string(runes)
+}
+
+func IsPalindrome(s string) bool {
+	normalized := strings.ToLower(strings.ReplaceAll(s, " ", ""))
+	for i := 0; i < len(normalized)/2; i++ {
+		if normalized[i] != normalized[len(normalized)-1-i] {
+			return false
+		}
+	}
+	return true
+}
+
+// The Hamming Distance measures the minimum number of substitutions required to change one string into the other
+func HammingDistance(s1, s2 string) int {
+	if len(s1) != len(s2) {
+		return -1
+	}
+
+	distance := 0
+	for i := range s1 {
+		if s1[i] != s2[i] {
+			distance++
+		}
+	}
+	return distance
+}
+
+func SplitStrings(input []string, delimiter string) [][]string {
+	var result [][]string
+	for _, str := range input {
+		splitStr := strings.Split(str, delimiter)
+		result = append(result, splitStr)
+	}
+	return result
 }
 
 // next lexicographically greater permutation of a word
