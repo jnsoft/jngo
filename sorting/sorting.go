@@ -2,6 +2,20 @@ package sorting
 
 import "github.com/jnsoft/jngo/misc"
 
+func InsertionSort[T misc.Ordered](arr []T) {
+	insertionSort(arr, 0, len(arr)-1)
+}
+
+func insertionSort[T misc.Ordered](arr []T, lo, hi int) {
+	for i := lo; i <= hi; i++ {
+		for j := i; j > lo && arr[j] < arr[j-1]; j-- {
+			swap := arr[j]
+			arr[j] = arr[j-1]
+			arr[j-1] = swap
+		}
+	}
+}
+
 func QuickSort[T misc.Ordered](arr []T) {
 	if len(arr) < 2 {
 		return
