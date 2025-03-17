@@ -126,36 +126,121 @@ func merge_aux[T misc.Ordered](a []T, index, aux []int, lo, mid, hi int) {
 	}
 }
 
+// optimized version of quicksort (using Bentley-McIlroy 3-way partitioning, Tukey's ninther, and cutoff to insertion sort)
 func QuickSort[T misc.Ordered](arr []T) {
-	if len(arr) < 2 {
+	qsort(arr, 0, len(arr)-1)
+}
+
+func qsort[T misc.Ordered](a []T, lo, hi int) {
+	N := hi - lo + 1
+	// cutoff to insertion sort
+	if N <= MERGE_CUTOFF {
+		insertionSort(a, lo, hi)
 		return
+	} else if N <= 40 { // use median-of-3 as partitioning element
+		m := median3(a, lo, lo+N/2, hi)
+		exch(a, m, lo)
+	} else { // use Tukey ninther as partitioning element
+		eps := N / 8
+		mid := lo + N/2
+		m1 := median3(a, lo, lo+eps, lo+eps+eps)
+		m2 := median3(a, mid-eps, mid, mid+eps)
+		m3 := median3(a, hi-eps-eps, hi-eps, hi)
+		ninther := median3(a, m1, m2, m3)
+		exch(a, ninther, lo)
 	}
-	// Choose a pivot element (typically the last element)
-	pivotIndex := len(arr) - 1
-	pivot := arr[pivotIndex]
 
-	// Partition the array into two halves
-	left := 0
-	right := pivotIndex - 1
-
-	for left <= right {
-		// Move left pointer to the right until we find an element >= pivot
-		for arr[left] < pivot {
-			left++
+	// Bentley-McIlroy 3-way partitioning
+	i := lo
+	j := hi + 1
+	p := lo
+	q := hi + 1
+	v := a[lo]
+	for {
+		i++
+		for a[i] < v {
+			if i == hi {
+				break
+			}
+			i++
+		}
+		j--
+		for v < a[j] {
+			if j == lo {
+				break
+			}
+			j--
 		}
 
-		// Move right pointer to the left until we find an element <= pivot
-		for arr[right] > pivot {
-			right--
+		// pointers cross
+		if i == j && a[i] == v {
+			p++
+			exch(a, p, i)
+		}
+		if i >= j {
+			break
 		}
 
-		// Swap elements if they are in the wrong order
-		if left <= right {
-			arr[left], arr[right] = arr[right], arr[left]
-			left++
-			right--
+		exch(a, i, j)
+		if a[i] == v {
+			p++
+			exch(a, p, i)
+		}
+		if a[j] == v {
+			q--
+			exch(a, q, j)
 		}
 	}
-	QuickSort(arr[:right+1])
-	QuickSort(arr[left:])
+
+	i = j + 1
+	for k := lo; k <= p; k++ {
+		exch(a, k, j)
+		j--
+	}
+	for k := hi; k >= q; k-- {
+		exch(a, k, i)
+		i++
+	}
+
+	qsort(a, lo, j)
+	qsort(a, i, hi)
+}
+
+func exch[T misc.Ordered](a []T, i, j int) {
+	swap := a[i]
+	a[i] = a[j]
+	a[j] = swap
+}
+
+func median3[T misc.Ordered](a []T, i, j, k int) int {
+	if a[i] < a[j] {
+		if a[j] < a[k] {
+			return j
+		} else if a[i] < a[k] {
+			return k
+		} else {
+			return i
+		}
+	} else {
+		if a[k] < a[j] {
+			return j
+		} else if a[k] < a[i] {
+			return k
+		} else {
+			return i
+		}
+	}
+}
+
+func IsSorted[T misc.Ordered](arr []T) bool {
+	return isSorted(arr, 0, len(arr)-1)
+}
+
+func isSorted[T misc.Ordered](a []T, lo, hi int) bool {
+	for i := lo + 1; i <= hi; i++ {
+		if a[i] < a[i-1] {
+			return false
+		}
+	}
+	return true
 }

@@ -64,12 +64,9 @@ func TestSorting(t *testing.T) {
 
 	t.Run("Quick sort", func(t *testing.T) {
 
-		QuickSort(intArray)
-		QuickSort(floatArray)
-		QuickSort(stringArray)
-
-		CollectionAssertEqual(t, intArray, intArray_sorted)
-		CollectionAssertEqual(t, floatArray, floatArray_sorted)
-		CollectionAssertEqual(t, stringArray, stringArray_sorted)
+		ints := append([]int(nil), unsorted...)
+		QuickSort(ints)
+		CollectionAssertEqual(t, ints, sorted)
 	})
+
 }
