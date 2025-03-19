@@ -10,6 +10,7 @@ type (
 		head   *node[T]
 		length int
 	}
+
 	node[T any] struct {
 		value T
 		prev  *node[T]

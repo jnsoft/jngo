@@ -44,6 +44,10 @@ func SplitStrings(input []string, delimiter string) [][]string {
 	return result
 }
 
+func ToLines(str string) []string {
+	return strings.Split(strings.ReplaceAll(str, "\r\n", "\n"), "\n")
+}
+
 // next lexicographically greater permutation of a word
 func NextPermutation(s *string) (bool, string) {
 	runes := []rune(*s)

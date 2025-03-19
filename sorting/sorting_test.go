@@ -1,6 +1,7 @@
 package sorting
 
 import (
+	"math/rand"
 	"testing"
 
 	. "github.com/jnsoft/jngo/testhelper"
@@ -69,4 +70,34 @@ func TestSorting(t *testing.T) {
 		CollectionAssertEqual(t, ints, sorted)
 	})
 
+	t.Run("Large random test", func(t *testing.T) {
+		length := 10000
+		arr1 := make([]int, length)
+		arr2 := make([]int, length)
+		arr3 := make([]int, length)
+
+		for i := 0; i < length; i++ {
+			r := rand.Intn(2*length+1) - length
+			arr1[i] = r
+			arr2[i] = r
+			arr3[i] = r
+		}
+
+		InsertionSort(arr1)
+		MergeSort(arr2)
+		QuickSort(arr3)
+
+		var t1, t2, t3 bool = true, true, true
+
+		for i := 0; i < length-1; i++ {
+			t1 = t1 && (arr1[i] <= arr1[i+1])
+			t2 = t2 && (arr2[i] <= arr2[i+1])
+			t3 = t3 && (arr3[i] <= arr3[i+1])
+		}
+
+		AssertTrue(t, t1)
+		AssertTrue(t, t2)
+		AssertTrue(t, t3)
+
+	})
 }
