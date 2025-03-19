@@ -144,6 +144,18 @@ func HasDuplicates[T comparable](arr []T) bool {
 	return false
 }
 
+func EqualSlices[T comparable](a, b []T) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
+}
+
 func FilterByArray[A any, B bool](arr []A, filter []B) []A {
 	if len(arr) != len(filter) {
 		panic("array lengths must be equal")

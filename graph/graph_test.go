@@ -1,6 +1,8 @@
 package graph
 
 import (
+	"math/rand"
+	"strings"
 	"testing"
 
 	. "github.com/jnsoft/jngo/testhelper"
@@ -75,4 +77,84 @@ func TestGraph(t *testing.T) {
 		AssertEqual(t, g_dir.e, 0)
 	})
 
+	t.Run("ToString", func(t *testing.T) {
+		g_undir, _ := NewGraph(4, false)
+		_ = g_undir.AddEdge(0, 1)
+		_ = g_undir.AddEdge(1, 2)
+		_ = g_undir.AddEdge(2, 3)
+
+		g_dir, _ := NewGraph(4, true)
+		_ = g_dir.AddEdge(0, 1)
+		_ = g_dir.AddEdge(1, 2)
+		_ = g_dir.AddEdge(2, 3)
+
+		graphString := g_undir.ToString()
+		graphString2 := g_dir.ToString()
+
+		expectedString := `4
+3
+0 1
+1 0
+1 2
+2 1
+2 3
+3 2
+`
+		expectedString2 := `4
+3
+0 1
+1 2
+2 3
+`
+		AssertEqual(t, graphString, expectedString)
+		AssertEqual(t, graphString2, expectedString2)
+		if strings.TrimSpace(graphString) != strings.TrimSpace(expectedString) {
+			t.Errorf("Expected graph string:\n%s\ngot:\n%s", expectedString, graphString)
+		}
+	})
+
+	t.Run("NewGraphFromString", func(t *testing.T) {
+		size := 2000
+		g_undir := getGrapgh(size, false)
+		g_dir := getGrapgh(size, true)
+
+		graphString := g_undir.ToString()
+		graphString2 := g_dir.ToString()
+
+		g_undir2, _ := NewGraphFromString(graphString, false)
+		g_dir2, _ := NewGraphFromString(graphString2, true)
+
+		AssertTrue(t, g_dir.Equals(g_dir2))
+		AssertTrue(t, g_undir2.Equals(g_undir2))
+	})
+
+	t.Run("Graph Copy", func(t *testing.T) {
+		size := 2000
+		g_undir := getGrapgh(size, false)
+		g_dir := getGrapgh(size, true)
+
+		g_undir2 := g_undir.CopyGraph()
+		g_dir2 := g_dir.CopyGraph()
+
+		AssertTrue(t, g_dir.Equals(g_dir2))
+		AssertTrue(t, g_undir2.Equals(g_undir2))
+
+	})
+
+}
+
+func getGrapgh(size int, directed bool) Graph {
+	g, _ := NewGraph(size, directed)
+	for i := 0; i < size; i++ {
+		r := rand.Intn(size)
+		if r == i {
+			if i == 0 {
+				i = 1
+			} else {
+				r = 0
+			}
+		}
+		_ = g.AddEdge(i, r)
+	}
+	return *g
 }

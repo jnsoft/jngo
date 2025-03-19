@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/jnsoft/jngo/misc"
 	"github.com/jnsoft/jngo/stack"
 	"github.com/jnsoft/jngo/stringhelper"
 )
@@ -74,10 +75,17 @@ func NewGraphFromString(g string, is_directed bool) (*Graph, error) {
 		return nil, fmt.Errorf("failed to parse vertex count: %v", err)
 	}
 
+	e, err := strconv.Atoi(lines[1])
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse edge count: %v", err)
+	}
+
 	graph, err := NewGraph(v, is_directed)
 	if err != nil {
 		return nil, err
 	}
+
+	graph.e = e
 
 	for i := 2; i < len(lines); i++ {
 		if strings.TrimSpace(lines[i]) == "" {
@@ -88,27 +96,19 @@ func NewGraphFromString(g string, is_directed bool) (*Graph, error) {
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse edge: %v", err)
 		}
-		err = graph.AddEdge(v1, w1)
+		err = graph.addEdgeRaw(v1, w1)
+		e--
 		if err != nil {
 			return nil, fmt.Errorf("failed to add edge: %v", err)
 		}
 	}
-	return graph, nil
-}
-
-func (g *Graph) CopyGraph() *Graph {
-	cp, _ := NewGraph(g.v, g.isDirected)
-	cp.e = g.e
-	for v := 0; v < g.v; v++ {
-		reverse := stack.New[int]()
-		for w := range g.adjacencyList[v] {
-			reverse.Push(w)
-		}
-		for !reverse.IsEmpty() {
-			cp.adjacencyList[v] = append(cp.adjacencyList[v], reverse.Pop())
-		}
+	if graph.isDirected && e != 0 {
+		return nil, fmt.Errorf("wrong number of edges, want %v, got %v", graph.e, graph.e-e)
 	}
-	return cp
+	if !graph.isDirected && e != -graph.e {
+		return nil, fmt.Errorf("wrong number of edges, want %v, got %v", graph.e, graph.e-e/2)
+	}
+	return graph, nil
 }
 
 func (g *Graph) AddEdge(v, w int) error {
@@ -120,6 +120,14 @@ func (g *Graph) AddEdge(v, w int) error {
 	if !g.isDirected {
 		g.adjacencyList[w] = append(g.adjacencyList[w], v)
 	}
+	return nil
+}
+
+func (g *Graph) addEdgeRaw(v, w int) error {
+	if v < 0 || v >= g.v || w < 0 || w >= g.v {
+		return errors.New("vertex out of bounds")
+	}
+	g.adjacencyList[v] = append(g.adjacencyList[v], w)
 	return nil
 }
 
@@ -152,6 +160,39 @@ func (g *Graph) RemoveEdge(v, w int) error {
 	}
 	g.e--
 	return nil
+}
+
+func (g *Graph) CopyGraph() *Graph {
+	cp, _ := NewGraph(g.v, g.isDirected)
+	cp.e = g.e
+	for v := 0; v < g.v; v++ {
+		reverse := stack.New[int]()
+		for _, w := range g.adjacencyList[v] {
+			reverse.Push(w)
+		}
+		for !reverse.IsEmpty() {
+			cp.adjacencyList[v] = append(cp.adjacencyList[v], reverse.Pop())
+		}
+	}
+	return cp
+}
+
+func (g *Graph) Equals(other *Graph) bool {
+	if g.v != other.v || g.e != other.e || g.isDirected != other.isDirected {
+		return false
+	}
+
+	if len(g.adjacencyList) != len(other.adjacencyList) {
+		return false
+	}
+
+	for i := range g.adjacencyList {
+		if !misc.EqualSlices[int](g.adjacencyList[i], other.adjacencyList[i]) {
+			return false
+		}
+	}
+
+	return true
 }
 
 func (g *Graph) ToString() string {
