@@ -16,10 +16,11 @@ type (
 		v             int // Number of vertices
 		e             int // Number of edges
 		adjacencyList [][]int
+		isDirected    bool
 	}
 )
 
-func (g *Graph) adj(v int) ([]int, error) {
+func (g *Graph) Adj(v int) ([]int, error) {
 	if v < 0 || v >= g.v {
 		return nil, errors.New("vertex out of bounds")
 	}
@@ -47,7 +48,7 @@ func readEdge(e string) (v, w int, err error) {
 	return v, w, nil
 }
 
-func NewGraph(v int) (*Graph, error) {
+func NewGraph(v int, is_directed bool) (*Graph, error) {
 	if v < 0 {
 		return nil, errors.New("number of vertices must be nonnegative")
 	}
@@ -55,6 +56,7 @@ func NewGraph(v int) (*Graph, error) {
 		v:             v,
 		e:             0,
 		adjacencyList: make([][]int, v),
+		isDirected:    is_directed,
 	}
 	for i := 0; i < v; i++ {
 		g.adjacencyList[i] = []int{}
@@ -62,7 +64,7 @@ func NewGraph(v int) (*Graph, error) {
 	return g, nil
 }
 
-func NewGraphFromString(g string) (*Graph, error) {
+func NewGraphFromString(g string, is_directed bool) (*Graph, error) {
 	lines := stringhelper.ToLines(g)
 	if len(lines) < 1 {
 		return nil, fmt.Errorf("invalid input: no vertex count specified")
@@ -72,7 +74,7 @@ func NewGraphFromString(g string) (*Graph, error) {
 		return nil, fmt.Errorf("failed to parse vertex count: %v", err)
 	}
 
-	graph, err := NewGraph(v)
+	graph, err := NewGraph(v, is_directed)
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +97,7 @@ func NewGraphFromString(g string) (*Graph, error) {
 }
 
 func (g *Graph) CopyGraph() *Graph {
-	cp, _ := NewGraph(g.v)
+	cp, _ := NewGraph(g.v, g.isDirected)
 	cp.e = g.e
 	for v := 0; v < g.v; v++ {
 		reverse := stack.New[int]()
@@ -109,15 +111,46 @@ func (g *Graph) CopyGraph() *Graph {
 	return cp
 }
 
-func (g *Graph) AddEdge(v, w int, directed bool) error {
+func (g *Graph) AddEdge(v, w int) error {
 	if v < 0 || v >= g.v || w < 0 || w >= g.v {
 		return errors.New("vertex out of bounds")
 	}
 	g.e++
 	g.adjacencyList[v] = append(g.adjacencyList[v], w)
-	if !directed {
+	if !g.isDirected {
 		g.adjacencyList[w] = append(g.adjacencyList[w], v)
 	}
+	return nil
+}
+
+func (g *Graph) RemoveEdge(v, w int) error {
+	if g.e == 0 {
+		return errors.New("no edges to remove in graph")
+	}
+	if v < 0 || v >= g.v || w < 0 || w >= g.v {
+		return fmt.Errorf("vertex out of bounds: %d or %d", v, w)
+	}
+	adjV := g.adjacencyList[v]
+	found := false
+	for i, value := range adjV {
+		if value == w {
+			g.adjacencyList[v] = append(adjV[:i], adjV[i+1:]...)
+			found = true
+			break
+		}
+	}
+	if !found {
+		return fmt.Errorf("no edge in graph between %d and %d", v, w)
+	}
+	if !g.isDirected {
+		for i, value := range g.adjacencyList[w] {
+			if value == v {
+				g.adjacencyList[w] = append(g.adjacencyList[w][:i], g.adjacencyList[w][i+1:]...)
+				break
+			}
+		}
+	}
+	g.e--
 	return nil
 }
 
