@@ -162,6 +162,51 @@ func (g *Graph) RemoveEdge(v, w int) error {
 	return nil
 }
 
+func (g *Graph) Degree(v int) int {
+	return len(g.adjacencyList[v])
+}
+
+func (g *Graph) MaxDegree() int {
+	max := 0
+	for i := 0; i < g.v; i++ {
+		deg := g.Degree(i)
+		if deg > max {
+			max = deg
+		}
+	}
+	return max
+}
+
+func (g *Graph) AvgDegree(v int) float64 {
+	return 2.0 * float64(g.e) / float64(g.v)
+}
+
+func (g *Graph) NoOfSelfLoops() int {
+	c := 0
+	for i := 0; i < g.v; i++ {
+		for _, w := range g.adjacencyList[i] {
+			if i == w {
+				c++
+			}
+		}
+	}
+	return c / 2
+}
+
+func (g *Graph) Reverse() *Graph {
+	if !g.isDirected {
+		return g.CopyGraph()
+	}
+
+	R, _ := NewGraph(g.v, true)
+	for v := 0; v < g.v; v++ {
+		for _, w := range g.adjacencyList[v] {
+			R.AddEdge(w, v)
+		}
+	}
+	return R
+}
+
 func (g *Graph) CopyGraph() *Graph {
 	cp, _ := NewGraph(g.v, g.isDirected)
 	cp.e = g.e
