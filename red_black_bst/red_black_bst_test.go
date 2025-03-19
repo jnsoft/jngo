@@ -1,4 +1,4 @@
-package red_black_dst
+package red_black_bst
 
 import (
 	"fmt"

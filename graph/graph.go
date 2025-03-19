@@ -21,34 +21,6 @@ type (
 	}
 )
 
-func (g *Graph) Adj(v int) ([]int, error) {
-	if v < 0 || v >= g.v {
-		return nil, errors.New("vertex out of bounds")
-	}
-	return g.adjacencyList[v], nil
-}
-
-func readEdge(e string) (v, w int, err error) {
-	// Replace multiple spaces with a single space
-	re := regexp.MustCompile(`\s+`)
-	e = re.ReplaceAllString(e, " ")
-
-	e = strings.TrimSpace(e)
-
-	vs := strings.Split(e, " ")
-	if len(vs) < 2 {
-		return 0, 0, fmt.Errorf("invalid edge format")
-	}
-
-	v, err1 := strconv.Atoi(vs[0])
-	w, err2 := strconv.Atoi(vs[1])
-	if err1 != nil || err2 != nil {
-		return 0, 0, fmt.Errorf("failed to parse vertices: %s", e)
-	}
-
-	return v, w, nil
-}
-
 func NewGraph(v int, is_directed bool) (*Graph, error) {
 	if v < 0 {
 		return nil, errors.New("number of vertices must be nonnegative")
@@ -109,6 +81,34 @@ func NewGraphFromString(g string, is_directed bool) (*Graph, error) {
 		return nil, fmt.Errorf("wrong number of edges, want %v, got %v", graph.e, graph.e-e/2)
 	}
 	return graph, nil
+}
+
+func readEdge(e string) (v, w int, err error) {
+	// Replace multiple spaces with a single space
+	re := regexp.MustCompile(`\s+`)
+	e = re.ReplaceAllString(e, " ")
+
+	e = strings.TrimSpace(e)
+
+	vs := strings.Split(e, " ")
+	if len(vs) < 2 {
+		return 0, 0, fmt.Errorf("invalid edge format")
+	}
+
+	v, err1 := strconv.Atoi(vs[0])
+	w, err2 := strconv.Atoi(vs[1])
+	if err1 != nil || err2 != nil {
+		return 0, 0, fmt.Errorf("failed to parse vertices: %s", e)
+	}
+
+	return v, w, nil
+}
+
+func (g *Graph) Adj(v int) ([]int, error) {
+	if v < 0 || v >= g.v {
+		return nil, errors.New("vertex out of bounds")
+	}
+	return g.adjacencyList[v], nil
 }
 
 func (g *Graph) AddEdge(v, w int) error {
@@ -240,7 +240,7 @@ func (g *Graph) Equals(other *Graph) bool {
 	return true
 }
 
-func (g *Graph) ToString() string {
+func (g *Graph) String() string {
 	var sb strings.Builder
 	sb.WriteString(fmt.Sprintf("%d\n%d\n", g.v, g.e))
 	for v := 0; v < g.v; v++ {
