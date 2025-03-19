@@ -88,8 +88,8 @@ func TestGraph(t *testing.T) {
 		_ = g_dir.AddEdge(1, 2)
 		_ = g_dir.AddEdge(2, 3)
 
-		graphString := g_undir.ToString()
-		graphString2 := g_dir.ToString()
+		graphString := g_undir.String()
+		graphString2 := g_dir.String()
 
 		expectedString := `4
 3
@@ -118,8 +118,8 @@ func TestGraph(t *testing.T) {
 		g_undir := getGrapgh(size, false)
 		g_dir := getGrapgh(size, true)
 
-		graphString := g_undir.ToString()
-		graphString2 := g_dir.ToString()
+		graphString := g_undir.String()
+		graphString2 := g_dir.String()
 
 		g_undir2, _ := NewGraphFromString(graphString, false)
 		g_dir2, _ := NewGraphFromString(graphString2, true)

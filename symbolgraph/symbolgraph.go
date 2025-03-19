@@ -1,6 +1,7 @@
 package symbolgraph
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/jnsoft/jngo/graph"
@@ -18,7 +19,7 @@ type (
 
 // builds graph from strings instead of integers for vertices (wrapper for regular graph)
 // example input: MovieName1/Actor1/Actor2/Actor3\nMovieName2/Actor4/Actor5/Actor2\n... (delimeter = '/')
-func NewSymbolGraph(input, delimeter string) (*SymbolGraph, error) {
+func NewSymbolGraph(input, delimeter string, is_directed bool) (*SymbolGraph, error) {
 	// First pass builds the symbol table by reading strings to associate distinct strings with an index
 	st := red_black_bst.NewRedBlackTree[string, int]()
 	lines := stringhelper.ToLines(input)
@@ -26,7 +27,7 @@ func NewSymbolGraph(input, delimeter string) (*SymbolGraph, error) {
 		a := strings.Split(line, delimeter)
 		for i := 0; i < len(a); i++ {
 			if !st.Contains(a[i]) {
-				st.Put(a[i], st.Copy().Size())
+				st.Put(a[i], st.Size())
 			}
 		}
 	}
@@ -39,7 +40,7 @@ func NewSymbolGraph(input, delimeter string) (*SymbolGraph, error) {
 	}
 
 	// second pass builds the graph by connecting first vertex on each line to all others
-	g, _ := graph.NewGraph(st.Size(), false)
+	g, _ := graph.NewGraph(st.Size(), is_directed)
 	for _, line := range lines {
 		a := strings.Split(line, delimeter)
 		v, _ := st.Get(a[0])
@@ -72,27 +73,28 @@ func (sg *SymbolGraph) Name(v int) string {
 func (sg *SymbolGraph) DegreesOfSeparation(source, sink string) (int, string) {
 	var sb strings.Builder
 	ret := -1
-	if !sg.Contains(source) {
-		sb.Append((string.Format("Symbol graph does not contain {0}", source)));
-	} 
-	if sg.Contains(sink) {
-		sb.Append((string.Format("Symbol graph does not contain {0}", sink)));
+	if sg.g.IsDirected() {
+		panic("can't calculate degrees of separation for directed graph")
 	}
-	
-		ret = 0
-		BreadthFirstPaths paths = new BreadthFirstPaths(this.G, Index(source));
-		int t = this.Index(sink);
-		if (paths.HasPathTo(t))
-			foreach (int v in paths.PathTo(t))
-			{
-				sb.Append(string.Format("{0}", this.Name(v)));
-				ret++;
-			}
-		else
-			sb.Append(string.Format("Not connected"));
+	if !sg.Contains(source) {
+		sb.WriteString(fmt.Sprintf("Symbol graph does not contain %v", source))
+	}
+	if !sg.Contains(sink) {
+		sb.WriteString(fmt.Sprintf("Symbol graph does not contain %v", sink))
 	}
 
-	output = sb.ToString();
-	return ret;
-}
+	ret = 0
+	paths := sg.g.BreadthFirstPaths(sg.Index(source))
+	t := sg.Index(sink)
+	if paths.HasPathTo(t) {
+		for _, v := range paths.PathTo(t) {
+			sb.WriteString(fmt.Sprintf("%v", sg.Name(v)))
+			ret++
+		}
+	} else {
+		sb.WriteString("Not connected")
+	}
+
+	output := sb.String()
+	return ret, output
 }

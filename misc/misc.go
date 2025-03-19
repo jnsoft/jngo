@@ -6,6 +6,10 @@ import (
 	"reflect"
 )
 
+const (
+	MaxInt32 = int32(1<<31 - 1)
+)
+
 type UnsignedNumber interface {
 	~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~uintptr
 }

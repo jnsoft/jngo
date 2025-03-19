@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/jnsoft/jngo/misc"
+	"github.com/jnsoft/jngo/queue"
 	"github.com/jnsoft/jngo/stack"
 	"github.com/jnsoft/jngo/stringhelper"
 )
@@ -18,6 +19,13 @@ type (
 		e             int // Number of edges
 		adjacencyList [][]int
 		isDirected    bool
+	}
+
+	BreadthFirstPaths struct {
+		marked []bool // marked[v] = true if v connects to s
+		edgeTo []int  // edgeTo[v] = previous edge on s-v path
+		distTo []int  // distTo[v] = number of edges in shortest s-v path
+		Source int
 	}
 )
 
@@ -177,6 +185,10 @@ func (g *Graph) MaxDegree() int {
 	return max
 }
 
+func (g *Graph) IsDirected() bool {
+	return g.isDirected
+}
+
 func (g *Graph) AvgDegree(v int) float64 {
 	return 2.0 * float64(g.e) / float64(g.v)
 }
@@ -249,4 +261,61 @@ func (g *Graph) String() string {
 		}
 	}
 	return sb.String()
+}
+
+func (g *Graph) BreadthFirstPaths(source int) *BreadthFirstPaths {
+
+	bfp := &BreadthFirstPaths{
+		Source: source,
+		marked: make([]bool, g.v),
+		edgeTo: make([]int, g.v),
+		distTo: make([]int, g.v),
+	}
+
+	q := queue.New[int]()
+	for v := 0; v < g.v; v++ {
+		bfp.distTo[v] = int(misc.MaxInt32)
+	}
+	bfp.distTo[source] = 0
+	bfp.marked[source] = true
+	q.Enqueue(source)
+
+	for !q.IsEmpty() {
+		v := q.Dequeue()
+		for _, w := range g.adjacencyList[v] {
+			if !bfp.marked[w] {
+				bfp.edgeTo[w] = v
+				bfp.distTo[w] = bfp.distTo[v] + 1
+				bfp.marked[w] = true
+				q.Enqueue(w)
+			}
+		}
+	}
+
+	return bfp
+
+}
+
+// is there a path s to v?
+func (bfp *BreadthFirstPaths) HasPathTo(v int) bool {
+	return bfp.marked[v]
+}
+
+// number of edges in shortest path s to v
+func (bfp *BreadthFirstPaths) DistTo(v int) int {
+	return bfp.distTo[v]
+}
+
+// shortest path s to v
+func (bfp *BreadthFirstPaths) PathTo(v int) []int {
+	if !bfp.HasPathTo(v) {
+		return nil
+	}
+	path := stack.New[int]()
+	var i int
+	for i = v; bfp.distTo[i] != 0; i = bfp.edgeTo[i] {
+		path.Push(i)
+	}
+	path.Push(i)
+	return path.ToArray()
 }

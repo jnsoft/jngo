@@ -48,6 +48,31 @@ func (s *Stack[T]) Push(value T) {
 	s.length++
 }
 
+func (s *Stack[T]) ToArray() []T {
+	result := make([]T, 0, s.length)
+	for s.length > 0 {
+		value := s.Pop()
+		result = append(result, value)
+	}
+	return result
+}
+
+// yield
+func (s *Stack[T]) ToChannel() <-chan T {
+	ch := make(chan T)
+
+	go func() {
+		defer close(ch) // Close the channel when done
+		current := s.head
+		for current != nil {
+			ch <- current.value
+			current = current.prev
+		}
+	}()
+
+	return ch
+}
+
 func (s *Stack[T]) String() string {
 	if s == nil || s.head == nil {
 		return "nil"
