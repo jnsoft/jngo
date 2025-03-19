@@ -70,20 +70,19 @@ func TestBitHelper(t *testing.T) {
 			input    uint32
 			expected uint32
 		}{
-			//{0b00000001, 0b00000010}, // Simple case: next permutation
-			//{0b00000010, 0b00000100}, // Simple case: next permutation
-			//{0b00010000, 0b00100000}, // Next higher binary permutation
-			//{0b111, 0b1011},          // 111 -> 1011
-			//{0b1010, 0b1100}, // 1010 -> 1100
-			{0b1000, 0b1001},         // 1000 -> 1001 (next lexicographic)
-			{0b11111111, 0b11111111}, // Edge case where all bits are set (no higher permutation)
-			//{0b10101010, 0b10101100}, // A pattern case
+			{0b00000001, 0b00000010},  // Simple case: next permutation
+			{0b00000010, 0b00000100},  // Simple case: next permutation
+			{0b00010000, 0b00100000},  // Next higher binary permutation
+			{0b111, 0b1011},           // 111 -> 1011
+			{0b1010, 0b1100},          // 1010 -> 1100
+			{0b1000, 0b10000},         // 1000 -> 1001 (next lexicographic)
+			{0b11111111, 0b101111111}, // Edge case where all bits are set (no higher permutation)
+			{0b10101010, 0b10101100},  // A pattern case
 		}
 
 		for _, tc := range testCases {
-			result := NextLexicographicPermutaion(tc.input)
-			println(ToBinaryString(result))
-			AssertEqual(t, result, tc.expected)
+			_, res := NextLexicographicPermutaion(tc.input)
+			AssertEqual(t, res, tc.expected)
 		}
 	})
 

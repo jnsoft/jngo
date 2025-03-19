@@ -138,25 +138,9 @@ func BitScanForwards2(n uint32) int {
 }
 
 // find next larger int with same number of bits set, 01001100 -> 01010001 -> 01010010 -> 01010100 ...
-func NextLexicographicPermutaion(n uint32) uint32 {
-	// Step 1: Identify the rightmost 0 that is followed by 1
-	c := n & -n                     // Isolate the rightmost 1-bit
-	r := n + c                      // Add c to the number to get the next larger number
-	return (((n ^ r) / c) >> 1) | r // Rearrange bits to the right of the flipped position
-}
-
-func NextLexicographicPermutaion2(n uint32) uint32 {
+func NextLexicographicPermutaion(n uint32) (bool, uint32) {
 	t := ConvertTralingZeros(n)
-	return (t + 1) | (LSB(^t)-1)>>(BitScanForwards(n)+1)
-}
-
-func bitCount(n uint32) int {
-	count := 0
-	for n > 0 {
-		count++
-		n >>= 1
-	}
-	return count
+	return true, (t + 1) | (LSB(^t)-1)>>(BitScanForwards(n)+1)
 }
 
 // Edit distance/Hamming distance between two strings.The Hamming distance is here defined as the number of differing bits
