@@ -100,6 +100,15 @@ func Find[A any](items []A, predicate func(A) bool) (value A, found bool) {
 
 // Array helpers /////////////////////////////
 
+// in place reverse
+func Reverse[T any](arr []int, start, end int) {
+	for start < end {
+		arr[start], arr[end] = arr[end], arr[start]
+		start++
+		end--
+	}
+}
+
 func Sequence[T Number](min, max, step T) []T {
 	if step != 0 && (max-min)*step < 0 {
 		panic("incorrect stepsize")
