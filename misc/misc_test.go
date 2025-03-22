@@ -162,3 +162,26 @@ func TestReverse(t *testing.T) {
 	})
 
 }
+
+func TestRotate(t *testing.T) {
+	t.Run("Test Rotate", func(t *testing.T) {
+		start := []int{1, 2, 3, 4, 5, 6}
+		start2 := Copy(start)
+		expected := []int{5, 6, 1, 2, 3, 4}
+		Rotate(start, 2)
+		Rotate(start2, 8)
+		CollectionAssertEqual(t, start, expected)
+		CollectionAssertEqual(t, start2, expected)
+	})
+
+	t.Run("Test negative rotate", func(t *testing.T) {
+		start := []int{1, 2, 3, 4, 5, 6}
+		start2 := Copy(start)
+		expected := []int{3, 4, 5, 6, 1, 2}
+		Rotate(start, -2)
+		Rotate(start2, -8)
+		CollectionAssertEqual(t, start, expected)
+		CollectionAssertEqual(t, start2, expected)
+	})
+
+}
