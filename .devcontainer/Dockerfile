@@ -1,4 +1,6 @@
-FROM FROM docker.io/golang:latest
+
+# Use the official Go image as a parent image
+FROM docker.io/golang:latest
 
 # Install necessary tools
 RUN apt-get update && apt-get install -y \
@@ -23,7 +25,7 @@ RUN useradd -ms /bin/bash vscode
 RUN mkdir -p /go && chown -R vscode:vscode /go
 
 # Set the user to vscode
-USER vscode
+USER root
 
 # Set the working directory
 WORKDIR /workspace
