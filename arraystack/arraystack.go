@@ -1,5 +1,6 @@
 package arraystack
 
+// stack := Stack[int]{}
 type ArrayStack[T any] struct {
 	data []T
 }
