@@ -19,6 +19,7 @@ type Point struct {
 hashMap := make(map[string]int)
 myMap["A"] = 25
 value, exists := hashMap["A"]
+isEmpty := len(hashMap) == 0
 for key, value := range myMap {
         fmt.Printf("%s -> %d\n", key, value)
 }
