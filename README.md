@@ -23,6 +23,10 @@ isEmpty := len(hashMap) == 0
 for key, value := range myMap {
         fmt.Printf("%s -> %d\n", key, value)
 }
+toSlice := make([]int, 0, len(s.data))
+    for key := range s.data {
+        result = append(result, key)
+}
 delete(hashMap, "A")
 
 
