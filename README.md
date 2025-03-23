@@ -14,3 +14,15 @@ type Point struct {
     X, Y float64
 }
 ```
+
+```
+hashMap := make(map[string]int)
+myMap["A"] = 25
+value, exists := hashMap["A"]
+for key, value := range myMap {
+        fmt.Printf("%s -> %d\n", key, value)
+}
+delete(hashMap, "A")
+
+
+```
