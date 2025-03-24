@@ -1,6 +1,9 @@
 package stringhelper
 
-import "strings"
+import (
+	"math"
+	"strings"
+)
 
 func Reverse(s string) string {
 	runes := []rune(s)
@@ -33,6 +36,35 @@ func HammingDistance(s1, s2 string) int {
 		}
 	}
 	return distance
+}
+
+func EditDistance(s1, s2 string) int {
+	n := len(s1)
+	m := len(s2)
+	dp := make([][]int, n+1)
+	for i := range dp {
+		dp[i] = make([]int, m+1)
+	}
+
+	for i := 0; i <= n; i++ {
+		for j := 0; j <= m; j++ {
+			if i == 0 {
+				dp[i][j] = j // First row: All insertions
+			} else if j == 0 {
+				dp[i][j] = i // First column: All deletions
+			} else if s1[i-1] == s2[j-1] {
+				dp[i][j] = dp[i-1][j-1] // No operation required
+			} else {
+				deletion := dp[i-1][j]
+				insertion := dp[i][j-1]
+				substitution := dp[i-1][j-1]
+				dp[i][j] = 1 + int(math.Min(math.Min(float64(deletion), float64(insertion)), float64(substitution)))
+			}
+		}
+	}
+
+	// The bottom-right cell contains the result
+	return dp[n][m]
 }
 
 func SplitStrings(input []string, delimiter string) [][]string {
