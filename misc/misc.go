@@ -244,16 +244,16 @@ func GetRandomElements[T any](arr []T, n int, repetitions bool) []T {
 	return result
 }
 
-func Permutations(arr []any) [][]any {
-	var result [][]any
+func Permutations[T any](arr []T) [][]T {
+	var result [][]T
 	generatePermutations(arr, 0, &result)
 	return result
 }
 
-func generatePermutations(arr []any, start int, result *[][]any) {
+func generatePermutations[T any](arr []T, start int, result *[][]T) {
 	if start == len(arr)-1 {
 		// Append a copy of the current permutation to the result
-		temp := make([]any, len(arr))
+		temp := make([]T, len(arr))
 		copy(temp, arr)
 		*result = append(*result, temp)
 		return
