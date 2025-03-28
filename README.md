@@ -16,18 +16,18 @@ type Point struct {
 ```
 
 ```
-hashMap := make(map[string]int)
-myMap["A"] = 25
-value, exists := hashMap["A"]
-isEmpty := len(hashMap) == 0
-for key, value := range myMap {
+hashmap := make(map[string]int)
+hashmap["A"] = 25
+value, exists := hashmap["A"]
+isEmpty := len(hashmap) == 0
+for key, value := range hashmap {
         fmt.Printf("%s -> %d\n", key, value)
 }
 toSlice := make([]int, 0, len(s.data))
     for key := range s.data {
         result = append(result, key)
 }
-delete(hashMap, "A")
+delete(hashmap, "A")
 
 
 ```
