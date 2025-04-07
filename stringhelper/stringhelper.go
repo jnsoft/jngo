@@ -2,6 +2,7 @@ package stringhelper
 
 import (
 	"math"
+	"sort"
 	"strings"
 )
 
@@ -10,6 +11,14 @@ func Reverse(s string) string {
 	for i, j := 0, len(runes)-1; i < j; i, j = i+1, j-1 {
 		runes[i], runes[j] = runes[j], runes[i]
 	}
+	return string(runes)
+}
+
+func Sort(s string) string {
+	runes := []rune(s)
+	sort.Slice(runes, func(i, j int) bool {
+		return runes[i] < runes[j]
+	})
 	return string(runes)
 }
 

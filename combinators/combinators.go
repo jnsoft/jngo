@@ -1,4 +1,4 @@
-package flock
+package combinators
 
 // Identity function I := λx.x
 func I[T any](f T) T {
@@ -6,9 +6,11 @@ func I[T any](f T) T {
 }
 
 // The self-application combinator M (for “Mockingbird”), aka ω, λf.ff
-//func M[T any](f T) {
-//	return f(f)
-//}
+func M[T any](f func(T) T) func(T) T {
+	return func(x T) T {
+		return f(f(x))
+	}
+}
 
 // B combinator: function composition
 func B(f, g func(int) int) func(int) int {
@@ -50,7 +52,7 @@ func K(x int) func(int) int {
 	}
 }
 
-// S combinator: applies f to x and g(x)
+// S combinator: applies f to x and g(x), λxyz.(xz)(yz)
 func S(f func(int, int) int, g func(int) int) func(int) int {
 	return func(x int) int {
 		return f(x, g(x))
