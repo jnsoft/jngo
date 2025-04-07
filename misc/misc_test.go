@@ -152,3 +152,36 @@ func TestSubArray(t *testing.T) {
 		CollectionAssertEqual(t, sub_arr2, []int{3, 4, 5})
 	})
 }
+
+func TestReverse(t *testing.T) {
+	t.Run("Test Reverse", func(t *testing.T) {
+		start := []int{1, 2, 3, 4}
+		expected := []int{4, 3, 2, 1}
+		Reverse[int](start, 0, len(start)-1)
+		CollectionAssertEqual(t, start, expected)
+	})
+
+}
+
+func TestRotate(t *testing.T) {
+	t.Run("Test Rotate", func(t *testing.T) {
+		start := []int{1, 2, 3, 4, 5, 6}
+		start2 := Copy(start)
+		expected := []int{5, 6, 1, 2, 3, 4}
+		Rotate(start, 2)
+		Rotate(start2, 8)
+		CollectionAssertEqual(t, start, expected)
+		CollectionAssertEqual(t, start2, expected)
+	})
+
+	t.Run("Test negative rotate", func(t *testing.T) {
+		start := []int{1, 2, 3, 4, 5, 6}
+		start2 := Copy(start)
+		expected := []int{3, 4, 5, 6, 1, 2}
+		Rotate(start, -2)
+		Rotate(start2, -8)
+		CollectionAssertEqual(t, start, expected)
+		CollectionAssertEqual(t, start2, expected)
+	})
+
+}

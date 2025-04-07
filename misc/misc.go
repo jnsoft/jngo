@@ -100,6 +100,37 @@ func Find[A any](items []A, predicate func(A) bool) (value A, found bool) {
 
 // Array helpers /////////////////////////////
 
+func Copy[T any](src []T) []T {
+	dst := make([]T, len(src))
+	copy(dst, src)
+	return dst
+}
+
+// in place reverse
+func Reverse[T any](arr []T, start, end int) {
+	for start < end {
+		arr[start], arr[end] = arr[end], arr[start]
+		start++
+		end--
+	}
+}
+
+// rotate slice k steps in place
+func Rotate[T any](arr []T, k int) {
+	n := len(arr)
+	k = k % n
+	if k < 0 {
+		k += n
+	}
+
+	// Step 1: Reverse the entire slice
+	Reverse(arr, 0, n-1)
+	// Step 2: Reverse the first k elements
+	Reverse(arr, 0, k-1)
+	// Step 3: Reverse the remaining elements
+	Reverse(arr, k, n-1)
+}
+
 func Sequence[T Number](min, max, step T) []T {
 	if step != 0 && (max-min)*step < 0 {
 		panic("incorrect stepsize")
@@ -213,16 +244,16 @@ func GetRandomElements[T any](arr []T, n int, repetitions bool) []T {
 	return result
 }
 
-func Permutations(arr []any) [][]any {
-	var result [][]any
+func Permutations[T any](arr []T) [][]T {
+	var result [][]T
 	generatePermutations(arr, 0, &result)
 	return result
 }
 
-func generatePermutations(arr []any, start int, result *[][]any) {
+func generatePermutations[T any](arr []T, start int, result *[][]T) {
 	if start == len(arr)-1 {
 		// Append a copy of the current permutation to the result
-		temp := make([]any, len(arr))
+		temp := make([]T, len(arr))
 		copy(temp, arr)
 		*result = append(*result, temp)
 		return
