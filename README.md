@@ -28,6 +28,11 @@ toSlice := make([]int, 0, len(s.data))
         result = append(result, key)
 }
 delete(hashmap, "A")
-
-
 ```
+
+RWMutex (instead of sync.Mutex) allows multiple readers to access the resource concurrently, while ensuring that only one writer can access it at any time. Use in read-heavy scenarios.
+m.mu.RLock() allows multiple readers
+m.mu.Lock() allows only one writer
+
+
+
