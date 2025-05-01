@@ -1,6 +1,7 @@
 package misc
 
 import (
+	"hash/fnv"
 	"math"
 	"math/rand"
 	"reflect"
@@ -269,4 +270,19 @@ func generatePermutations[T any](arr []T, start int, result *[][]T) {
 		// Swap back to restore the original state
 		arr[start], arr[i] = arr[i], arr[start]
 	}
+}
+
+// Fowler-Noll-Vo hash (FNV-1a) algorithm
+func HashKey(key string) int {
+	h := fnv.New32a()
+	h.Write([]byte(key))
+	return int(h.Sum32())
+}
+
+func Min_Branchless(a, b int) int {
+	return a + ((b - a) & ((b - a) >> 31))
+}
+
+func Max_Branchless(a, b int) int {
+	return a - ((a - b) & ((a - b) >> 31))
 }
