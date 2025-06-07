@@ -4,12 +4,18 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
+)
+
+const (
+	EMPTY_QUEUE = "queue is empty"
 )
 
 type PriorityQueue[T any] struct {
 	pq   []T
 	N    int
 	less func(i, j T) bool
+	mu   sync.RWMutex
 }
 
 func NewPriorityQueue[T any](less func(i, j T) bool) *PriorityQueue[T] {
@@ -20,21 +26,29 @@ func NewPriorityQueue[T any](less func(i, j T) bool) *PriorityQueue[T] {
 }
 
 func (pq *PriorityQueue[T]) IsEmpty() bool {
+	pq.mu.RLock()
+	defer pq.mu.RUnlock()
 	return pq.N == 0
 }
 
 func (pq *PriorityQueue[T]) Size() int {
+	pq.mu.RLock()
+	defer pq.mu.RUnlock()
 	return pq.N
 }
 
 func (pq *PriorityQueue[T]) Peek() (T, error) {
-	if pq.IsEmpty() {
-		return *new(T), errors.New("queue is empty")
+	pq.mu.RLock()
+	defer pq.mu.RUnlock()
+	if pq.N == 0 { // calling IsEmpty causing deadlock
+		return *new(T), errors.New(EMPTY_QUEUE)
 	}
 	return pq.pq[1], nil
 }
 
 func (pq *PriorityQueue[T]) Enqueue(x T) {
+	pq.mu.Lock()
+	defer pq.mu.Unlock()
 	pq.N++
 	if pq.N >= len(pq.pq) {
 		pq.pq = append(pq.pq, x)
@@ -45,8 +59,10 @@ func (pq *PriorityQueue[T]) Enqueue(x T) {
 }
 
 func (pq *PriorityQueue[T]) Dequeue() (T, error) {
-	if pq.IsEmpty() {
-		return *new(T), errors.New("queue is empty")
+	pq.mu.Lock()
+	defer pq.mu.Unlock()
+	if pq.N == 0 {
+		return *new(T), errors.New(EMPTY_QUEUE)
 	}
 	pq.exch(1, pq.N)
 	min := pq.pq[pq.N]
@@ -71,12 +87,16 @@ func (pq *PriorityQueue[T]) PrettyPrint() string {
 }
 
 func (pq *PriorityQueue[T]) Get(index int) T {
+	pq.mu.RLock()
+	defer pq.mu.RUnlock()
 	return pq.pq[index+1]
 }
 
 func (pq *PriorityQueue[T]) GetEnumerator() <-chan T {
 	ch := make(chan T)
 	go func() {
+		pq.mu.RLock()
+		defer pq.mu.RUnlock()
 		tempPQ := NewPriorityQueue(pq.less)
 		tempPQ.pq = append(tempPQ.pq, pq.pq[1:pq.N+1]...)
 		tempPQ.N = pq.N
