@@ -3,6 +3,7 @@ package pqueue
 import (
 	"errors"
 	"fmt"
+	"log"
 	"strings"
 	"sync"
 )
@@ -92,6 +93,12 @@ func (pq *PriorityQueue[T]) Get(index int) T {
 	return pq.pq[index+1]
 }
 
+func (pq *PriorityQueue[T]) Items() []T {
+	pq.mu.RLock()
+	defer pq.mu.RUnlock()
+	return append([]T(nil), pq.pq[1:pq.N+1]...)
+}
+
 func (pq *PriorityQueue[T]) GetEnumerator() <-chan T {
 	ch := make(chan T)
 	go func() {
@@ -106,7 +113,7 @@ func (pq *PriorityQueue[T]) GetEnumerator() <-chan T {
 			if err == nil {
 				ch <- v
 			} else {
-				panic("PriorityQueue->GetEnumerator" + err.Error())
+				log.Printf("PriorityQueue->GetEnumerator: %v", err)
 			}
 		}
 		close(ch)
