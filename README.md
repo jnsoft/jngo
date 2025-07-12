@@ -7,6 +7,7 @@ map/filter/reduce (fold)
 ```
 go build -v ./...
 go test -v ./...
+go test -v ./pqueue
 ```
 
 ```

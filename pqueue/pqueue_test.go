@@ -202,4 +202,41 @@ func TestPriorityQueue(t *testing.T) {
 		AssertEqual(t, ix, len(expectedOrder))
 	})
 
+	t.Run("Items test 1", func(t *testing.T) {
+		q := NewPriorityQueue[int](func(a, b int) bool { return a < b })
+
+		q.Enqueue(10)
+		q.Enqueue(5)
+		q.Enqueue(20)
+
+		// Get items
+		items := q.Items()
+		expected := map[int]bool{10: true, 5: true, 20: true}
+
+		if len(items) != 3 {
+			t.Fatalf("expected 3 items, got %d", len(items))
+		}
+		for _, v := range items {
+			if !expected[v] {
+				t.Errorf("unexpected item %v in Items()", v)
+			}
+		}
+	})
+
+	t.Run("Items test 2", func(t *testing.T) {
+		q := NewPriorityQueue[int](func(a, b int) bool { return a < b })
+
+		n_items := 10001
+		for i := 0; i < n_items; i++ {
+			q.Enqueue(i)
+		}
+
+		// Get items
+		items := q.Items()
+
+		if len(items) != n_items {
+			t.Fatalf("expected %d items, got %d", n_items, len(items))
+		}
+
+	})
 }
