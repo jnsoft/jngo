@@ -1,136 +1,141 @@
 package merkle
 
 import (
+	"bytes"
 	"encoding/hex"
 	"testing"
 )
 
-func TestNewMerkleNode_Leaf(t *testing.T) {
-	hf := SHA256Hash{}
-	data := []byte("leaf")
-	node := NewMerkleNode(nil, nil, data, hf)
-	expected := hf.Hash(data)
-	if hex.EncodeToString(node.Hash) != hex.EncodeToString(expected) {
-		t.Errorf("expected %x, got %x", expected, node.Hash)
+func TestMerkleTree_SHA256(t *testing.T) {
+	data := [][]byte{
+		[]byte("a"),
+		[]byte("b"),
+		[]byte("c"),
+		[]byte("d"),
 	}
-	if node.Left != nil || node.Right != nil {
-		t.Error("leaf node should not have children")
-	}
-}
-
-func TestNewMerkleNode_Internal(t *testing.T) {
-	hf := SHA256Hash{}
-	left := NewMerkleNode(nil, nil, []byte("left"), hf)
-	right := NewMerkleNode(nil, nil, []byte("right"), hf)
-	node := NewMerkleNode(left, right, nil, hf)
-	expected := hf.Hash(append(left.Hash, right.Hash...))
-	if hex.EncodeToString(node.Hash) != hex.EncodeToString(expected) {
-		t.Errorf("expected %x, got %x", expected, node.Hash)
-	}
-	if node.Left != left || node.Right != right {
-		t.Error("internal node children mismatch")
-	}
-}
-
-func TestNewMerkleTree_EvenLeaves(t *testing.T) {
-	hf := SHA256Hash{}
-	data := [][]byte{[]byte("a"), []byte("b"), []byte("c"), []byte("d")}
-	tree := NewMerkleTree(data, hf)
+	tree := NewMerkleTree(data, SHA256Hash{})
 	if tree.Root == nil {
-		t.Fatal("root should not be nil")
+		t.Fatal("Root should not be nil")
 	}
 	if len(tree.Leaves) != 4 {
-		t.Errorf("expected 4 leaves, got %d", len(tree.Leaves))
+		t.Errorf("Expected 4 leaves, got %d", len(tree.Leaves))
 	}
 }
 
-func TestNewMerkleTree_OddLeaves(t *testing.T) {
-	hf := SHA256Hash{}
-	data := [][]byte{[]byte("a"), []byte("b"), []byte("c")}
-	tree := NewMerkleTree(data, hf)
+func TestMerkleTree_SHA3_256(t *testing.T) {
+	data := [][]byte{
+		[]byte("x"),
+		[]byte("y"),
+	}
+	tree := NewMerkleTree(data, SHA3_256Hash{})
 	if tree.Root == nil {
-		t.Fatal("root should not be nil")
+		t.Fatal("Root should not be nil")
 	}
-	if len(tree.Leaves) != 4 {
-		t.Errorf("expected 4 leaves (odd padded), got %d", len(tree.Leaves))
+	if len(tree.Leaves) != 2 {
+		t.Errorf("Expected 2 leaves, got %d", len(tree.Leaves))
 	}
 }
 
-func TestMerkleTree_GenerateProof_Valid(t *testing.T) {
-	hf := SHA256Hash{}
-	data := [][]byte{[]byte("a"), []byte("b"), []byte("c"), []byte("d")}
-	tree := NewMerkleTree(data, hf)
+func TestMerkleTree_OddLeaves(t *testing.T) {
+	data := [][]byte{
+		[]byte("1"),
+		[]byte("2"),
+		[]byte("3"),
+	}
+	tree := NewMerkleTree(data, SHA256Hash{})
+	if len(tree.Leaves) != 4 {
+		t.Errorf("Expected 4 leaves after padding, got %d", len(tree.Leaves))
+	}
+}
+
+func TestGenerateProofAndVerify(t *testing.T) {
+	data := [][]byte{
+		[]byte("1"),
+		[]byte("2"),
+		[]byte("3"),
+		[]byte("4"),
+	}
+	tree := NewMerkleTree(data, SHA256Hash{})
+
 	for i := range data {
 		proof, err := tree.GenerateProof(i)
 		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
+			t.Fatalf("GenerateProof failed: %v", err)
 		}
-		if proof == nil {
-			t.Fatal("proof should not be nil")
+		if proof.Index != i {
+			t.Errorf("Proof index mismatch: got %d, want %d", proof.Index, i)
 		}
-		if len(proof.Hashes) == 0 {
-			t.Error("proof should contain sibling hashes")
+		ok := VerifyProof(data[i], proof, tree.Root.Hash, SHA256Hash{})
+		if !ok {
+			t.Errorf("Proof verification failed for index %d", i)
 		}
 	}
 }
 
-func TestMerkleTree_GenerateProof_InvalidIndex(t *testing.T) {
-	hf := SHA256Hash{}
+func TestGenerateProof_InvalidIndex(t *testing.T) {
 	data := [][]byte{[]byte("a"), []byte("b")}
-	tree := NewMerkleTree(data, hf)
+	tree := NewMerkleTree(data, SHA256Hash{})
 	_, err := tree.GenerateProof(-1)
 	if err == nil {
-		t.Error("expected error for negative index")
+		t.Error("Expected error for negative index")
 	}
 	_, err = tree.GenerateProof(2)
 	if err == nil {
-		t.Error("expected error for out-of-range index")
+		t.Error("Expected error for out-of-range index")
 	}
 }
 
-func TestVerifyProof_Valid(t *testing.T) {
-	hf := SHA256Hash{}
-	data := [][]byte{[]byte("a"), []byte("b"), []byte("c"), []byte("d")}
-	tree := NewMerkleTree(data, hf)
-	for i, leaf := range data {
-		proof, err := tree.GenerateProof(i)
-		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
-		}
-		valid := VerifyProof(leaf, proof, tree.Root.Hash, hf)
-		if !valid {
-			t.Errorf("proof verification failed for leaf %d", i)
-		}
-	}
-}
-
-func TestVerifyProof_Invalid(t *testing.T) {
-	hf := SHA256Hash{}
+func TestVerifyProof_InvalidProof(t *testing.T) {
 	data := [][]byte{[]byte("a"), []byte("b")}
-	tree := NewMerkleTree(data, hf)
-	proof, err := tree.GenerateProof(0)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	invalidLeaf := []byte("not a")
-	valid := VerifyProof(invalidLeaf, proof, tree.Root.Hash, hf)
-	if valid {
-		t.Error("expected proof verification to fail for invalid leaf")
+	tree := NewMerkleTree(data, SHA256Hash{})
+	proof, _ := tree.GenerateProof(0)
+	// Tamper with proof
+	proof.Path[0].Hash = []byte("invalid")
+	ok := VerifyProof(data[0], proof, tree.Root.Hash, SHA256Hash{})
+	if ok {
+		t.Error("Expected verification to fail for tampered proof")
 	}
 }
 
-func TestSHA256Hash_Name(t *testing.T) {
-	h := SHA256Hash{}
-	if h.Name() != "SHA256" {
-		t.Errorf("expected SHA256, got %s", h.Name())
+func TestHashFunctionNames(t *testing.T) {
+	tests := []struct {
+		hf     HashFunction
+		expect string
+	}{
+		{SHA256Hash{}, "SHA256"},
+		{SHA3_256Hash{}, "SHA3-256"},
+	}
+
+	for _, tt := range tests {
+		if got := tt.hf.Name(); got != tt.expect {
+			t.Errorf("HashFunction.Name() = %s, want %s", got, tt.expect)
+		}
 	}
 }
 
-func TestSHA256Hash_Hash(t *testing.T) {
-	h := SHA256Hash{}
-	data := []byte("test")
-	hash := h.Hash(data)
-	if len(hash) != 32 {
-		t.Errorf("expected 32 bytes, got %d", len(hash))
+func TestMerkleNodeHashConsistency(t *testing.T) {
+	data := []byte("hello")
+	hf := SHA256Hash{}
+	node := newMerkleNode(nil, nil, data, hf)
+	expected := hf.Hash(data)
+	if !bytes.Equal(node.Hash, expected) {
+		t.Errorf("Leaf node hash mismatch")
+	}
+	left := newMerkleNode(nil, nil, []byte("a"), hf)
+	right := newMerkleNode(nil, nil, []byte("b"), hf)
+	parent := newMerkleNode(left, right, nil, hf)
+	combined := append(left.Hash, right.Hash...)
+	expectedParent := hf.Hash(combined)
+	if !bytes.Equal(parent.Hash, expectedParent) {
+		t.Errorf("Parent node hash mismatch")
+	}
+}
+
+func TestRootHashHexEncoding(t *testing.T) {
+	data := [][]byte{[]byte("x"), []byte("y")}
+	tree := NewMerkleTree(data, SHA256Hash{})
+	rootHex := hex.EncodeToString(tree.Root.Hash)
+	if len(rootHex) != 64 {
+		t.Errorf("Expected 64 hex chars for SHA256, got %d", len(rootHex))
 	}
 }
