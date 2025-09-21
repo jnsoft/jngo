@@ -10,6 +10,16 @@ func XOR(arr1, arr2 []byte) []byte {
 	return result
 }
 
+func BytesToHexString(data []byte) string {
+	const hexChars = "0123456789abcdef"
+	out := make([]byte, len(data)*2)
+	for i, b := range data {
+		out[i*2] = hexChars[b>>4]
+		out[i*2+1] = hexChars[b&0x0F]
+	}
+	return string(out)
+}
+
 func ToHexString(bytes []byte, toLUpper bool) string {
 	var hexChars string
 	if toLUpper {
