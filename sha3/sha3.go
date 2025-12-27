@@ -51,14 +51,20 @@ var rotationOffsets = [5][5]uint{
 	{27, 20, 39, 8, 14},
 }
 
+// Hash256 computes the SHA3-256 hash of the given data and returns
+// the 32-byte digest.
 func Hash256(data []byte) []byte {
 	return keccakHash(data, sha3_256Rate, 0x06, sha3_256HashLen)
 }
 
+// Hash512 computes the SHA3-512 hash of the given data and returns
+// the 64-byte digest.
 func Hash512(data []byte) []byte {
 	return keccakHash(data, sha3_512Rate, 0x06, sha3_512HashLen)
 }
 
+// Shake256 computes the SHAKE256 extendable-output function (XOF) of the
+// given data and returns outLen bytes of output.
 func Shake256(data []byte, outLen int) []byte {
 	return keccakHash(data, shake256Rate, 0x1F, outLen)
 }
