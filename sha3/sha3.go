@@ -119,7 +119,9 @@ func keccakHash(data []byte, rate int, ds byte, outLen int) []byte {
 	return out
 }
 
-// Keccak-f[1600] permutation
+// keccakF1600 applies the Keccak-f[1600] permutation to the given state in place.
+// The state a is a 5×5 array of 64-bit lanes, flattened into a 25-element slice,
+// as specified in the Keccak/SHA-3 standard (see FIPS 202 and the Keccak reference).
 func keccakF1600(a *[25]uint64) {
 	var C, D [5]uint64
 	var B [25]uint64
