@@ -2,20 +2,19 @@ package sha3
 
 // Keccak/SHA3 parameters (Keccak-f[1600])
 const (
-	stateSize = 25 // 5×5 lanes
-	numRounds = 24
+	STATE_SIZE = 25 // 5×5 lanes
+	NUM_ROUNDS = 24
 
-	sha3_256Rate    = 136 // 1088-bit rate
-	sha3_256HashLen = 32  // 256 bits
+	SHA3_256_RATE     = 136 // 1088-bit rate
+	SHA3_256_HASH_LEN = 32  // 256 bits
 
-	sha3_512Rate    = 72 // 576-bit rate
-	sha3_512HashLen = 64 // 512 bits
-
-	shake256Rate = 136 // 1088-bit rate
+	SHA3_512_RATE     = 72  // 576-bit rate
+	SHA3_512_HASH_LEN = 64  // 512 bits
+	SHAKE_256_RATE    = 136 // 1088-bit rate
 )
 
 // round constants for Keccak-f[1600]
-var roundConstants = [numRounds]uint64{
+var roundConstants = [NUM_ROUNDS]uint64{
 	0x0000000000000001,
 	0x0000000000008082,
 	0x800000000000808A,
@@ -54,13 +53,13 @@ var rotationOffsets = [5][5]uint{
 // Hash256 computes the SHA3-256 hash of the given data and returns
 // the 32-byte digest.
 func Hash256(data []byte) []byte {
-	return keccakHash(data, sha3_256Rate, 0x06, sha3_256HashLen)
+	return keccakHash(data, SHA3_256_RATE, 0x06, SHA3_256_HASH_LEN)
 }
 
 // Hash512 computes the SHA3-512 hash of the given data and returns
 // the 64-byte digest.
 func Hash512(data []byte) []byte {
-	return keccakHash(data, sha3_512Rate, 0x06, sha3_512HashLen)
+	return keccakHash(data, SHA3_512_RATE, 0x06, SHA3_512_HASH_LEN)
 }
 
 // Shake256 computes the SHAKE256 extendable-output function (XOF) of the
@@ -69,12 +68,12 @@ func Shake256(data []byte, outLen int) []byte {
 	if outLen <= 0 {
 		return []byte{}
 	}
-	return keccakHash(data, shake256Rate, 0x1F, outLen)
+	return keccakHash(data, SHAKE_256_RATE, 0x1F, outLen)
 }
 
 // keccakHash is a generic sponge-based Keccak/SHA3/SHAKE helper.
 func keccakHash(data []byte, rate int, ds byte, outLen int) []byte {
-	var state [stateSize]uint64
+	var state [STATE_SIZE]uint64
 	idx := 0
 
 	// Absorb phase
@@ -129,7 +128,7 @@ func keccakF1600(a *[25]uint64) {
 	var C, D [5]uint64
 	var B [25]uint64
 
-	for round := 0; round < numRounds; round++ {
+	for round := 0; round < NUM_ROUNDS; round++ {
 		// θ step
 		for x := 0; x < 5; x++ {
 			C[x] = (*a)[x] ^ (*a)[x+5] ^ (*a)[x+10] ^ (*a)[x+15] ^ (*a)[x+20]

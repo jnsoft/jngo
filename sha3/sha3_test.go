@@ -49,39 +49,61 @@ func TestSha3_256(t *testing.T) {
 }
 
 func TestSha3_512(t *testing.T) {
-	msgs := []string{
-		"",
-		"abc",
-		"Hello, World!",
+	cases := []struct {
+		name string
+		msg  string
+	}{
+		{name: "empty", msg: ""},
+		{name: "abc", msg: "abc"},
+		{name: "hello_world", msg: "Hello, World!"},
 	}
 
-	for _, s := range msgs {
-		data := []byte(s)
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			data := []byte(tc.msg)
 
-		got := Hash512(data)
-		gotStr := hex.ToHexString(got, false)
+			got := Hash512(data)
+			gotStr := hex.ToHexString(got, false)
 
-		ref := stdsha3.Sum512(data)
-		refStr := hex.ToHexString(ref[:], false)
+			ref := stdsha3.Sum512(data)
+			refStr := hex.ToHexString(ref[:], false)
 
-		AssertEqual(t, gotStr, refStr)
+			AssertEqual(t, gotStr, refStr)
+		})
 	}
 }
 
 func TestShake256(t *testing.T) {
 	msg := []byte("Hello, World!")
-	outLen := 1024
+	cases := []struct {
+		name   string
+		outLen int
+	}{
+		{name: "1_byte", outLen: 1},
+		{name: "16_bytes", outLen: 16},
+		{name: "32_bytes", outLen: 32},
+		{name: "64_bytes", outLen: 64},
+		{name: "1024_bytes", outLen: 1024},
+	}
 
-	got := Shake256(msg, outLen)
-	gotStr := hex.ToHexString(got, false)
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := Shake256(msg, tc.outLen)
+			gotStr := hex.ToHexString(got, false)
 
-	ref := make([]byte, outLen)
-	shake := stdsha3.NewSHAKE256()
-	shake.Write(msg)
-	shake.Read(ref)
-	refStr := hex.ToHexString(ref, false)
+			ref := make([]byte, tc.outLen)
+			shake := stdsha3.NewSHAKE256()
+			if _, err := shake.Write(msg); err != nil {
+				t.Fatalf("failed to write to SHAKE256: %v", err)
+			}
+			if _, err := shake.Read(ref); err != nil {
+				t.Fatalf("failed to read from SHAKE256: %v", err)
+			}
+			refStr := hex.ToHexString(ref, false)
 
-	AssertEqual(t, gotStr, refStr)
+			AssertEqual(t, gotStr, refStr)
+		})
+	}
 }
 
 func TestSha3_256_LargeInput(t *testing.T) {
