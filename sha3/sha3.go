@@ -156,6 +156,7 @@ func keccakF1600(a *[25]uint64) {
 	}
 }
 
+// rotl64 performs a left rotation of the 64-bit value x by n bits.
 func rotl64(x uint64, n uint) uint64 {
 	if n == 0 {
 		return x
