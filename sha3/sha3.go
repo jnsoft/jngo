@@ -66,6 +66,9 @@ func Hash512(data []byte) []byte {
 // Shake256 computes the SHAKE256 extendable-output function (XOF) of the
 // given data and returns outLen bytes of output.
 func Shake256(data []byte, outLen int) []byte {
+	if outLen <= 0 {
+		return []byte{}
+	}
 	return keccakHash(data, shake256Rate, 0x1F, outLen)
 }
 
