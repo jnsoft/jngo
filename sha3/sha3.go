@@ -71,7 +71,28 @@ func Shake256(data []byte, outLen int) []byte {
 	return keccakHash(data, SHAKE_256_RATE, 0x1F, outLen)
 }
 
-// keccakHash is a generic sponge-based Keccak/SHA3/SHAKE helper.
+// keccakHash applies the Keccak-f[1600] sponge construction used by SHA3 and
+// SHAKE variants.
+//
+// Parameters:
+//   - data:   input message bytes to be absorbed into the state.
+//   - rate:   number of bytes processed per permutation call (r = bitrate / 8),
+//             e.g. 136 for SHA3-256/Shake256 or 72 for SHA3-512.
+//   - ds:     domain separation / padding byte that encodes the function
+//             variant (e.g. 0x06 for SHA3, 0x1F for SHAKE).
+//   - outLen: number of bytes to squeeze from the sponge (hash length for
+//             fixed-output functions, or arbitrary length for XOFs).
+//
+// The algorithm proceeds in three phases:
+//   1. Absorb: input bytes are XORed into the first `rate` bytes of the state,
+//      interpreted as little-endian 64-bit lanes; whenever the rate is full,
+//      keccakF1600 is applied.
+//   2. Pad: after all input is absorbed, the domain separation byte `ds` is
+//      XORed into the next byte of the state and the final bit 0x80 is XORed
+//      into the last byte of the rate portion, then keccakF1600 is applied.
+//   3. Squeeze: output bytes are read from the first `rate` bytes of the state;
+//      if more output is needed than fits in one block, keccakF1600 is applied
+//      again and more bytes are read, until `outLen` bytes have been produced.
 func keccakHash(data []byte, rate int, ds byte, outLen int) []byte {
 	var state [STATE_SIZE]uint64
 	idx := 0
